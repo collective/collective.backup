@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import pprint
+import shlex
 import shutil
 import sys
 
@@ -17,7 +18,18 @@ def main(argv=None):
             "Backup and restore a Plone/Zope filestorage and blobstorage "
             "with sensible defaults around repozo. Run one of the backup or "
             "restore commands directly, or generate scripts for them. "
-            f"Configure it with {scripts.ENV_PREFIX}* environment variables."
+            f"Configure it in the [tool.{scripts.PYPROJECT_TABLE}] table of "
+            f"pyproject.toml, or with {scripts.ENV_PREFIX}* variables in a "
+            ".env file or in the environment."
+        ),
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help=(
+            f"read the [tool.{scripts.PYPROJECT_TABLE}] table from this file, "
+            f"default: {scripts.PYPROJECT} in the current directory, if it has "
+            "this table.  Relative paths are relative to its directory."
         ),
     )
     parser.add_argument(
@@ -25,8 +37,9 @@ def main(argv=None):
         "--env-file",
         help=(
             f"read {scripts.ENV_PREFIX}* variables from this file, "
-            f"default: {scripts.ENV_FILE} in the current directory, if it exists. "
-            "Variables in the environment win."
+            f"default: {scripts.ENV_FILE} next to the configuration file, or in "
+            "the current directory.  These variables win over the configuration "
+            "file, and variables in the environment win over both."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -41,8 +54,8 @@ def main(argv=None):
     subparsers.add_parser(
         "crontab",
         help=(
-            f"print a crontab using {scripts.ENV_PREFIX}CRON for backup and "
-            f"{scripts.ENV_PREFIX}SNAPSHOT_CRON for snapshotbackup"
+            "print a crontab using the cron option for backup and the "
+            "snapshot_cron option for snapshotbackup"
         ),
     )
     for command, description in scripts.DESCRIPTIONS.items():
@@ -53,10 +66,11 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
 
     try:
+        config = scripts.Config(config=args.config, env_file=args.env_file)
         if args.command == "crontab":
-            print(crontab(args.env_file), end="")
+            print(crontab(config, explicit=args), end="")
             return 0
-        part = scripts.load_part(args.env_file)
+        part = config.part()
         if args.command == "generate":
             scripts.generate(part, bin_dir=args.bin_dir)
             return 0
@@ -73,42 +87,29 @@ def main(argv=None):
     return scripts.execute(args.command, part.arguments, args)
 
 
-def crontab(env_file=None):
+def crontab(config, explicit=None):
     """Return a crontab for the scheduled backups.
 
-    >>> print(crontab(), end='')
-    Traceback (most recent call last):
-    ...
-    plone.backup.scripts.ConfigError: Set PLONE_BACKUP_CRON and/or PLONE_BACKUP_SNAPSHOT_CRON...
-    >>> os.environ['PLONE_BACKUP_CRON'] = '0 3 * * *'
-    >>> print(crontab(), end='')
-    0 3 * * * .../plone-backup backup
-    >>> os.environ['PLONE_BACKUP_SNAPSHOT_CRON'] = '@weekly'
-    >>> print(crontab(), end='')
-    0 3 * * * .../plone-backup backup
-    @weekly .../plone-backup snapshotbackup
-    >>> del os.environ['PLONE_BACKUP_CRON']
-    >>> del os.environ['PLONE_BACKUP_SNAPSHOT_CRON']
+    We first change to the directory of the configuration,
+    so the job finds the same configuration and .env file.
+    Options that were given explicitly on the command line are passed on.
     """
-    variables = {}
-    if env_file:
-        variables.update(scripts.read_env_file(env_file))
-    elif os.path.isfile(scripts.ENV_FILE):
-        variables.update(scripts.read_env_file(scripts.ENV_FILE))
-    variables.update(os.environ)
     program = shutil.which("plone-backup") or os.path.join(
         os.path.dirname(sys.executable), "plone-backup"
     )
-    if env_file:
-        program += f" --env-file {os.path.abspath(env_file)}"
+    command = f"cd {shlex.quote(config.directory)} && {shlex.quote(program)}"
+    if explicit is not None and explicit.config:
+        command += f" --config {shlex.quote(config.config_path)}"
+    if explicit is not None and explicit.env_file:
+        command += f" --env-file {shlex.quote(config.env_file)}"
     lines = []
-    for variable, command in (("CRON", "backup"), ("SNAPSHOT_CRON", "snapshotbackup")):
-        schedule = variables.get(scripts.ENV_PREFIX + variable, "").strip()
+    for option, name in (("cron", "backup"), ("snapshot_cron", "snapshotbackup")):
+        schedule = config.options.get(option, "").strip()
         if schedule:
-            lines.append(f"{schedule} {program} {command}\n")
+            lines.append(f"{schedule} {command} {name}\n")
     if not lines:
         raise scripts.ConfigError(
-            f"Set {scripts.ENV_PREFIX}CRON and/or {scripts.ENV_PREFIX}SNAPSHOT_CRON "
-            "to a cron schedule, for example '0 3 * * *'."
+            "Set the cron and/or snapshot_cron option to a cron schedule, "
+            f"for example {scripts.ENV_PREFIX}CRON='0 3 * * *'."
         )
     return "".join(lines)

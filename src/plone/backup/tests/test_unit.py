@@ -69,8 +69,8 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(options, sanitised_options)
 
 
-class EnvTestCase(unittest.TestCase):
-    """Test reading the options from environment variables."""
+class TempDirTestCase(unittest.TestCase):
+    """Base class for tests in a temporary directory."""
 
     def setUp(self):
         import tempfile
@@ -88,6 +88,10 @@ class EnvTestCase(unittest.TestCase):
     def write(self, name, text):
         with open(name, "w") as myfile:
             myfile.write(text)
+
+
+class EnvTestCase(TempDirTestCase):
+    """Test reading the options from environment variables."""
 
     def test_read_env_file(self):
         from plone.backup.scripts import read_env_file
@@ -197,9 +201,125 @@ class EnvTestCase(unittest.TestCase):
 
     def test_crontab(self):
         from plone.backup.cli import crontab
+        from plone.backup.scripts import Config
+        from plone.backup.scripts import ConfigError
 
+        with self.assertRaises(ConfigError):
+            crontab(Config(environ={}))
         self.write(".env", "PLONE_BACKUP_SNAPSHOT_CRON=@weekly\n")
-        self.assertTrue(crontab().endswith(" snapshotbackup\n"))
+        lines = crontab(Config(environ={"PLONE_BACKUP_CRON": "0 3 * * *"}))
+        lines = lines.splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[0].startswith(f"0 3 * * * cd {self.tmp_dir} && "))
+        self.assertTrue(lines[0].endswith("plone-backup backup"))
+        self.assertTrue(lines[1].startswith("@weekly cd "))
+        self.assertTrue(lines[1].endswith("plone-backup snapshotbackup"))
+
+    def test_crontab_explicit_files(self):
+        from plone.backup.cli import crontab
+        from plone.backup.scripts import Config
+
+        import argparse
+
+        os.mkdir("project")
+        self.write("project/myproject.toml", '[tool.plone-backup]\ncron = "@daily"\n')
+        self.write("prod.env", "PLONE_BACKUP_KEEP=3\n")
+        config = Config(
+            config="project/myproject.toml", env_file="prod.env", environ={}
+        )
+        explicit = argparse.Namespace(config="x", env_file="y")
+        line = crontab(config, explicit=explicit)
+        project = os.path.join(self.tmp_dir, "project")
+        self.assertTrue(line.startswith(f"@daily cd {project} && "))
+        self.assertIn(f" --config {project}/myproject.toml ", line)
+        self.assertIn(f" --env-file {self.tmp_dir}/prod.env ", line)
+
+
+class PyprojectTestCase(TempDirTestCase):
+    """Test reading the options from pyproject.toml."""
+
+    PYPROJECT = """
+[project]
+name = "myproject"
+
+[tool.plone-backup]
+var_dir = "instance/var"
+keep = 7
+full = true
+enable-zipbackup = true
+pre_command = "echo 'start'"
+"""
+
+    def test_defaults_without_table(self):
+        from plone.backup.scripts import load_part
+
+        self.write("pyproject.toml", '[project]\nname = "myproject"\n')
+        part = load_part(environ={})
+        self.assertEqual(part.arguments["keep"], 2)
+        self.assertEqual(
+            part.arguments["storage"]["datafs"],
+            os.path.join(self.tmp_dir, "var", "filestorage", "Data.fs"),
+        )
+
+    def test_table(self):
+        from plone.backup.scripts import load_part
+
+        self.write("pyproject.toml", self.PYPROJECT)
+        part = load_part(environ={})
+        args = part.arguments
+        self.assertEqual(args["keep"], 7)
+        self.assertTrue(args["full"])
+        self.assertEqual(args["pre_command"], "echo 'start'")
+        self.assertEqual(
+            args["storage"]["datafs"],
+            os.path.join(self.tmp_dir, "instance", "var", "filestorage", "Data.fs"),
+        )
+        self.assertIn("zipbackup", part.commands())
+
+    def test_env_file_and_environment_win(self):
+        from plone.backup.scripts import load_part
+
+        self.write("pyproject.toml", self.PYPROJECT)
+        self.write(".env", "PLONE_BACKUP_KEEP=3\nPLONE_BACKUP_FULL=false\n")
+        part = load_part(environ={"PLONE_BACKUP_KEEP": "5"})
+        self.assertEqual(part.arguments["keep"], 5)
+        self.assertFalse(part.arguments["full"])
+        self.assertEqual(
+            part.arguments["storage"]["blobdir"],
+            os.path.join(self.tmp_dir, "instance", "var", "blobstorage"),
+        )
+
+    def test_explicit_config_elsewhere(self):
+        from plone.backup.scripts import load_part
+
+        os.makedirs("other/backend")
+        self.write("other/backend/pyproject.toml", self.PYPROJECT)
+        # The .env next to the configuration is used, not the one here.
+        self.write("other/backend/.env", "PLONE_BACKUP_KEEP=4\n")
+        self.write(".env", "PLONE_BACKUP_KEEP=3\n")
+        part = load_part(config="other/backend/pyproject.toml", environ={})
+        self.assertEqual(part.arguments["keep"], 4)
+        backend = os.path.join(self.tmp_dir, "other", "backend")
+        self.assertEqual(
+            part.arguments["storage"]["datafs"],
+            os.path.join(backend, "instance", "var", "filestorage", "Data.fs"),
+        )
+        self.assertEqual(part.bin_dir, os.path.join(backend, "bin"))
+
+    def test_wrong_values(self):
+        from plone.backup.scripts import ConfigError
+        from plone.backup.scripts import load_part
+
+        self.write("pyproject.toml", "[tool.plone-backup]\nkeep = [1, 2]\n")
+        with self.assertRaises(ConfigError):
+            load_part(environ={})
+        self.write("pyproject.toml", "[tool.plone-backup\n")
+        # Not parsable means: not found, unless explicitly asked for.
+        load_part(environ={})
+        with self.assertRaises(ConfigError):
+            load_part(config="pyproject.toml", environ={})
+        with self.assertRaises(ConfigError):
+            load_part(config="missing.toml", environ={})
 
 
 class CopyBlobsTestCase(unittest.TestCase):

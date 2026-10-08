@@ -21,9 +21,10 @@ but it does not need buildout.
 It is meant for projects created with `cookieplone <https://github.com/plone/cookieplone>`_,
 and for Docker based deployments.
 
-The options are environment variables, for example ``PLONE_BACKUP_KEEP=3``.
-So you can configure it with a ``.env`` file in your project,
-or with the ``environment`` of a container.
+You configure it in the ``[tool.plone-backup]`` table of your ``pyproject.toml``,
+with ``PLONE_BACKUP_*`` variables in a ``.env`` file,
+or with environment variables, for example in a container.
+See `Configuration`_.
 
 These are the commands:
 
@@ -71,22 +72,44 @@ Add ``plone.backup`` to the dependencies of your backend, for example in
     uv run plone-backup backup
 
 By default the filestorage is ``var/filestorage/Data.fs`` and the
-blobstorage is ``var/blobstorage``, relative to the current directory.
-Check the ``db_filestorage_location`` and ``db_blob_location`` in
-``instance.yaml``.  With the default cookieplone settings the data is in
-``instance/var``, so you put this in ``backend/.env``::
+blobstorage is ``var/blobstorage``, relative to the directory with the
+``pyproject.toml``.  Check the ``db_filestorage_location`` and
+``db_blob_location`` in ``instance.yaml``.  When the data is in
+``instance/var``, you put this in ``backend/pyproject.toml``::
 
-    PLONE_BACKUP_VAR_DIR=instance/var
+    [tool.plone-backup]
+    var_dir = "instance/var"
+    keep = 7
 
 Now ``uv run plone-backup backup`` backs up ``instance/var/filestorage/Data.fs``
 to ``instance/var/backups``, and ``instance/var/blobstorage`` to
 ``instance/var/blobstoragebackups``.
+
+Settings that differ per server, like the backup location on production,
+go in a ``.env`` file next to the ``pyproject.toml``, which you do not commit::
+
+    PLONE_BACKUP_LOCATION=/srv/backups/mysite
+    PLONE_BACKUP_BLOBBACKUPLOCATION=/srv/backups/mysite-blobs
 
 If you prefer scripts, run ``uv run plone-backup generate``.
 This creates ``bin/backup``, ``bin/snapshotbackup``, ``bin/restore`` and
 ``bin/snapshotrestore``, with the options of that moment baked in.
 Run ``plone-backup generate`` again after changing an option.
 Use ``--bin-dir`` or ``PLONE_BACKUP_BIN_DIR`` to put the scripts elsewhere.
+
+Without Docker, you can schedule the backups with cron.  Set the ``cron``
+option, and optionally ``snapshot_cron``::
+
+    [tool.plone-backup]
+    var_dir = "instance/var"
+    cron = "0 3 * * *"
+    snapshot_cron = "0 4 * * 0"
+
+Then ``uv run plone-backup crontab`` prints the crontab lines.  Add them
+with ``crontab -e``, or, when you have no crontab yet, install them with
+``uv run plone-backup crontab | crontab -``.  Each line first changes to the
+directory of the configuration, so the job finds the ``pyproject.toml`` and
+``.env`` file.
 
 Some ``Makefile`` targets you may want to add::
 
@@ -116,7 +139,7 @@ The image expects the data of Plone in ``/data``, as the
 and writes the backups to ``/backups``.  It runs as user ``plone``
 with uid 500, like those images, so it can read and restore their files.
 
-These variables are only used by the image:
+The schedule is in these variables:
 
 ``PLONE_BACKUP_CRON``
     Cron schedule for the ``backup`` command.  Default in the image: ``0 3 * * *``.
@@ -252,11 +275,14 @@ Command line
 
 ``plone-backup`` has these options and commands::
 
-    plone-backup [-e ENV_FILE] COMMAND
+    plone-backup [-c CONFIG] [-e ENV_FILE] COMMAND
 
+    -c, --config    read the [tool.plone-backup] table from this file,
+                    default: pyproject.toml in the current directory,
+                    if it has this table.
     -e, --env-file  read PLONE_BACKUP_* variables from this file,
-                    default: .env in the current directory, if it exists.
-                    Variables in the environment win.
+                    default: .env next to the configuration file,
+                    or in the current directory.
 
     backup, zipbackup, snapshotbackup,
     restore, ziprestore, snapshotrestore, altrestore
@@ -266,7 +292,7 @@ Command line
                     and for the restore commands an optional date.
     generate        Generate scripts for the commands, see below.
     show            Show the computed options.
-    crontab         Print a crontab, see `Docker image`_.
+    crontab         Print a crontab for the cron and snapshot_cron options.
 
 The ``-q`` option is useful in a cron job: you only get output when there is
 a problem.  It also works for the generated scripts: ``bin/backup -q``.
@@ -298,18 +324,43 @@ for the same name and are no longer wanted, are removed.  For example
 ``bin/zipbackup`` when you have switched off ``PLONE_BACKUP_ENABLE_ZIPBACKUP``.
 
 
-Options
--------
+Configuration
+-------------
 
-None of the options are needed by default.
-Each option is an environment variable: the option name in capitals,
-with ``PLONE_BACKUP_`` in front.  So option ``keep`` is ``PLONE_BACKUP_KEEP``,
-and ``blobbackuplocation`` is ``PLONE_BACKUP_BLOBBACKUPLOCATION``.
+None of the options are needed.  You can set them in three places.
+Later places win over earlier ones:
+
+1. The ``[tool.plone-backup]`` table in ``pyproject.toml``.
+   This is a good place for the settings of your project::
+
+       [tool.plone-backup]
+       var_dir = "instance/var"
+       keep = 7
+       enable_zipbackup = true
+
+   Use normal TOML values: strings, ``true``/``false``, and numbers.
+   You may write dashes instead of underscores: ``enable-zipbackup``.
+
+2. A ``.env`` file, next to the ``pyproject.toml``, or in the current directory
+   when there is no ``[tool.plone-backup]`` table.
+   This is a good place for settings that differ per server.
+   Here, each option is a variable: the option name in capitals,
+   with ``PLONE_BACKUP_`` in front.  So option ``keep`` is ``PLONE_BACKUP_KEEP``,
+   and ``blobbackuplocation`` is ``PLONE_BACKUP_BLOBBACKUPLOCATION``::
+
+       PLONE_BACKUP_KEEP=3
+
+3. Environment variables, with the same names as in the ``.env`` file.
+   This is how you configure the Docker image.
+
+Use ``plone-backup show`` to see the result.
+
 Boolean options accept ``true``, ``yes``, ``on`` and ``1`` as true,
 everything else is false.
 
-Relative paths are relative to ``PLONE_BACKUP_BASE_DIR``, by default the
-current directory.  But relative paths in the ``location`` options
+Relative paths are relative to the ``base_dir`` option, by default the
+directory with the ``pyproject.toml``, or else the current directory.
+But relative paths in the ``location`` options
 (``location``, ``snapshotlocation``, ``ziplocation``, ``blobbackuplocation``,
 ``blobsnapshotlocation``, ``blobziplocation``) are relative to the
 ``locationprefix``.  In paths, ``~`` (home dir) and ``$VARIABLE``-style
@@ -334,7 +385,7 @@ environment variables are expanded.
 
 ``base_dir``
     Directory that relative paths are relative to.
-    Default: the current directory.
+    Default: the directory with the ``pyproject.toml``, or else the current directory.
 
 ``bin_dir``
     Directory for the scripts that ``plone-backup generate`` creates.
@@ -367,6 +418,11 @@ environment variables are expanded.
 ``blobziplocation``
     Directory where the blob storage zipbackups will be created.
     Defaults to ``blobstoragezips`` in the ``locationprefix``.
+
+``cron``
+    Cron schedule for the ``backup`` command, used by ``plone-backup crontab``
+    and the Docker image.  For example ``0 3 * * *``.  Default: not set,
+    except in the Docker image.
 
 ``compress_blob``
     Default is false.
@@ -469,6 +525,10 @@ environment variables are expanded.
     a backup from a symlinked directory, in which case
     ``--no-l -k`` does the trick.
 
+``snapshot_cron``
+    Cron schedule for the ``snapshotbackup`` command, used by ``plone-backup crontab``
+    and the Docker image.  Default: not set.
+
 ``snapshotlocation``
     Location where snapshot backups of the filestorage are stored. Defaults to
     ``snapshotbackups`` in the ``locationprefix``.
@@ -498,8 +558,8 @@ An example ``.env`` file using various options::
 
 In a ``.env`` file, values may be quoted.  In double quotes, ``\n`` is a newline.
 
-If you see a warning about an unknown variable, check for typos:
-``PLONE_BACKUP_KEPE`` is ignored.
+If you see a warning about an unknown option, check for typos:
+``kepe`` or ``PLONE_BACKUP_KEPE`` is ignored.
 
 
 Blob storage
@@ -571,7 +631,8 @@ Migrating from collective.recipe.backup
 
 The options are the same, with these differences:
 
-- Options are environment variables: ``keep = 3`` becomes ``PLONE_BACKUP_KEEP=3``.
+- Options go in the ``[tool.plone-backup]`` table of ``pyproject.toml``,
+  or are environment variables: ``keep = 3`` becomes ``PLONE_BACKUP_KEEP=3``.
 - The name of the buildout part is the ``name`` option.
 - We do not look in other buildout parts for the location of the filestorage
   and blobstorage.  Set ``var_dir``, or ``datafs`` and ``blob_storage``.
@@ -581,8 +642,8 @@ The options are the same, with these differences:
 - Paths can not use ``${buildout:directory}``.  Use relative paths, or
   environment variables, for example ``$PWD/backups``.
 - Multi-line values like several ``pre_command`` lines: use ``&&``.
-- Instead of a part with ``z3c.recipe.usercrontab``, use the Docker image
-  or your own crontab.
+- Instead of a part with ``z3c.recipe.usercrontab``, use the ``cron`` option
+  with ``plone-backup crontab``, or the Docker image.
 
 
 Development

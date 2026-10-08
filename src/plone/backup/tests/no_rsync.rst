@@ -10,28 +10,21 @@ First we create some fresh content:
 
     >>> mkdir('var/blobstorage')
     >>> write('var', 'blobstorage', 'blob1.txt', 'Sample blob 1.')
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... only_blobs = true
-    ... use_rsync = false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_ONLY_BLOBS=true
+    ... PLONE_BACKUP_USE_RSYNC=false
     ... """)
 
 One thing we test here is if the buildout does not create too many
 directories that will not get used because have set only_blobs=true::
 
-    >>> print(system(buildout))
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
 
 Check the output of bin/backup and explicitly test that rsync is
@@ -41,9 +34,9 @@ nowhere to be found::
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Created /sample-buildout/var/blobstoragebackups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups/blobstorage.20.../blobstorage
+    INFO: Created /sample-project/var/blobstoragebackups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     <BLANKLINE>
 
@@ -55,8 +48,8 @@ Try again. but sleep 1 second so we are sure the timestamp gets a new name:
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups/blobstorage.20.../blobstorage
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     <BLANKLINE>
     >>> ls('var', 'blobstoragebackups')
@@ -71,8 +64,8 @@ And again to see that for incremental backups no old blob backups are removed::
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups/blobstorage.20.../blobstorage
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     <BLANKLINE>
     >>> ls('var', 'blobstoragebackups')
@@ -89,11 +82,11 @@ Now a restore::
     >>> print(output)
     <BLANKLINE>
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: Removing /sample-buildout/var/blobstorage
-    INFO: Copying /sample-buildout/var/blobstoragebackups/blobstorage.20.../blobstorage to /sample-buildout/var/blobstorage
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: Removing /sample-project/var/blobstorage
+    INFO: Copying /sample-project/var/blobstoragebackups/blobstorage.20.../blobstorage to /sample-project/var/blobstorage
     <BLANKLINE>
 
 Snapshots should work too::
@@ -102,9 +95,9 @@ Snapshots should work too::
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Created /sample-buildout/var/blobstoragesnapshots
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots/blobstorage.20.../blobstorage
+    INFO: Created /sample-project/var/blobstoragesnapshots
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     <BLANKLINE>
 
@@ -115,8 +108,8 @@ Try again:
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots/blobstorage.20.../blobstorage
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     <BLANKLINE>
     >>> ls('var', 'blobstoragesnapshots')
@@ -131,8 +124,8 @@ And again to see that removing old backups works::
     >>> 'rsync' in output
     False
     >>> print(output)
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: Copying /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots/blobstorage.20.../blobstorage
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: Copying /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots/blobstorage.20.../blobstorage
     INFO: Creating symlink from latest to blobstorage.20...
     INFO: Removed 1 blob backup, the latest 2 backups have been kept.
     <BLANKLINE>
@@ -149,9 +142,9 @@ And the snapshotrestore::
     >>> print(output)
     <BLANKLINE>
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: Removing /sample-buildout/var/blobstorage
-    INFO: Copying /sample-buildout/var/blobstoragesnapshots/blobstorage.20.../blobstorage to /sample-buildout/var/blobstorage
+    INFO: Restoring blobs from /sample-project/var/blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: Removing /sample-project/var/blobstorage
+    INFO: Copying /sample-project/var/blobstoragesnapshots/blobstorage.20.../blobstorage to /sample-project/var/blobstorage
     <BLANKLINE>

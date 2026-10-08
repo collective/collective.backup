@@ -7,33 +7,24 @@ Just to isolate some test differences, we run an empty buildout once::
 
 We'll use most options, except the blob options for now::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... backup_blobs = false
-    ... location = ${buildout:directory}/myproject
-    ... keep = 2
-    ... datafs = subfolder/myproject.fs
-    ... full = true
-    ... debug = true
-    ... snapshotlocation = snap/my
-    ... enable_snapshotrestore = true
-    ... pre_command = echo 'Can I have a backup?' > pre
-    ... post_command =
-    ...     echo 'Thanks a lot for the backup.' > post
-    ...     echo 'We are done.' >> post
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... PLONE_BACKUP_LOCATION=$PWD/myproject
+    ... PLONE_BACKUP_KEEP=2
+    ... PLONE_BACKUP_DATAFS=subfolder/myproject.fs
+    ... PLONE_BACKUP_FULL=true
+    ... PLONE_BACKUP_DEBUG=true
+    ... PLONE_BACKUP_SNAPSHOTLOCATION=snap/my
+    ... PLONE_BACKUP_ENABLE_SNAPSHOTRESTORE=true
+    ... PLONE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?' > pre
+    ... PLONE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' > post && echo 'We are done.' >> post
     ... """)
-    >>> print(system(buildout))
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
 
 Backups are now stored in the ``/myproject`` folder inside buildout
@@ -46,11 +37,11 @@ stderr.  Anyway::
     >>> output = system('bin/backup')
     >>> print(output)
     <BLANKLINE>
-    20...-...-... INFO: Created /sample-buildout/myproject
-    20...-...-... INFO: Please wait while backing up database file: /sample-buildout/subfolder/myproject.fs to /sample-buildout/myproject
+    20...-...-... INFO: Created /sample-project/myproject
+    20...-...-... INFO: Please wait while backing up database file: /sample-project/subfolder/myproject.fs to /sample-project/myproject
     20...-...-...
     >>> check_repozo_output()
-    --backup -f /sample-buildout/subfolder/myproject.fs -r /sample-buildout/myproject -F --verbose --gzip
+    --backup -f /sample-project/subfolder/myproject.fs -r /sample-project/myproject -F --verbose --gzip
 
 We do not check that the pre and post output appear in the correct order.
 In the tests the output order can differ between Python 2 and 3.
@@ -71,12 +62,12 @@ The same is true for the snapshot backup.
 
     >>> output = system('bin/snapshotbackup')
     >>> print(output)
-    20...-...-... INFO: Created /sample-buildout/var/snap/my
-    20...-...-... INFO: Please wait while making snapshot backup: /sample-buildout/subfolder/myproject.fs to /sample-buildout/var/snap/my
+    20...-...-... INFO: Created /sample-project/var/snap/my
+    20...-...-... INFO: Please wait while making snapshot backup: /sample-project/subfolder/myproject.fs to /sample-project/var/snap/my
     20...-...-...
     >>> if 'ERROR' in output: print(output)
     >>> check_repozo_output()
-    --backup -f /sample-buildout/subfolder/myproject.fs -r /sample-buildout/var/snap/my -F --verbose --gzip
+    --backup -f /sample-project/subfolder/myproject.fs -r /sample-project/var/snap/my -F --verbose --gzip
     >>> cat('pre')
     Can I have a backup?
     >>> cat('post')
@@ -111,7 +102,7 @@ INFO level logging is not there::
     >>> remove('pre')
     >>> remove('post')
     >>> check_repozo_output()
-    --backup -f /sample-buildout/subfolder/myproject.fs -r /sample-buildout/myproject -F --verbose --gzip
+    --backup -f /sample-project/subfolder/myproject.fs -r /sample-project/myproject -F --verbose --gzip
     >>> print(system('bin/backup --quiet'))
     >>> cat('pre')
     Can I have a backup?
@@ -121,7 +112,7 @@ INFO level logging is not there::
     >>> remove('pre')
     >>> remove('post')
     >>> check_repozo_output()
-    --backup -f /sample-buildout/subfolder/myproject.fs -r /sample-buildout/myproject -F --verbose --gzip
+    --backup -f /sample-project/subfolder/myproject.fs -r /sample-project/myproject -F --verbose --gzip
 
 In our case the ``--backup ...`` lines above are just the mock repozo script
 that still prints something. So it proves that the command is executed, but it
@@ -145,28 +136,19 @@ with enable_snapshotrestore set to false. The script should not be
 generated now (and buildout will actually remove the previously
 generated script).
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... backup_blobs = false
-    ... enable_snapshotrestore = false
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... PLONE_BACKUP_ENABLE_SNAPSHOTRESTORE=false
     ... """)
 
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Removed script '/sample-project/bin/snapshotrestore'.
     >>> ls('bin')
     -  backup
-    -  buildout
     -  repozo
     -  restore
     -  snapshotbackup

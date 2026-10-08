@@ -56,3 +56,5 @@ local.cfg
 #  _your own configuration lines_
 #  """
 ##
+*.egg-info/
+.venv/

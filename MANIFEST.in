@@ -1,5 +1,6 @@
 recursive-include src *
 include *txt *rst
+include Dockerfile docker-entrypoint.sh
 global-exclude *.pyc
 global-exclude *.pyo
 prune news

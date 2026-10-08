@@ -1,0 +1,7 @@
+.git
+.venv
+.tox
+**/__pycache__
+*.egg-info
+bin
+var

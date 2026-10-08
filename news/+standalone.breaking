@@ -1,0 +1,4 @@
+Rename ``collective.recipe.backup`` to ``plone.backup``, and make it work without zc.buildout.
+The options are read from ``PLONE_BACKUP_*`` environment variables, optionally from a ``.env`` file,
+instead of from a buildout section.  See the README for migrating.
+[jladage]

@@ -6,8 +6,8 @@ It is based on this article by Mike Rubel:
 http://www.mikerubel.org/computers/rsync_snapshots/
 """
 
-from collective.recipe.backup import utils
 from datetime import datetime
+from plone.backup import utils
 
 import logging
 import os
@@ -29,7 +29,7 @@ def find_suffixes(value, suffixes):
     If it does, return the value without suffix.
     It it does not, return None.
     """
-    if isinstance(suffixes, utils.stringtypes):
+    if isinstance(suffixes, str):
         suffixes = [suffixes]
     # Order the suffixes from large to small.
     # Otherwise looking for 'tar' will find 'delta.tar' too,
@@ -243,7 +243,7 @@ def get_valid_directories(container, name):
     Note: timestamps are not accepted here.  This function is not used
     in scenarios that use timestamps.
 
-    Using the zc.buildout tools we create some directories and files:
+    Using the test tools we create some directories and files:
 
     >>> mkdir('dirtest')  # noqa F821
     >>> get_valid_directories('dirtest', 'a')
@@ -305,7 +305,7 @@ def get_valid_archives(container, name):
     Note: timestamps are not accepted here.  This function is not used
     in scenarios that use timestamps.
 
-    Using the zc.buildout tools we create some directories and files:
+    Using the test tools we create some directories and files:
 
     >>> mkdir('dirtest')  # noqa F821
     >>> get_valid_archives('dirtest', 'a.tar.gz')
@@ -355,7 +355,7 @@ def rotate_directories(container, name):
     Note: timestamps are not handled here.  This function is not used
     in scenarios that use timestamps.
 
-    Using the zc.buildout tools we create some directories and files:
+    Using the test tools we create some directories and files:
 
     >>> mkdir('dirtest')  # noqa F821
     >>> rotate_directories('dirtest', 'a')
@@ -402,7 +402,7 @@ def rotate_archives(container, name):
     Note: timestamps are not handled here.  This function is not used
     in scenarios that use timestamps.
 
-    Using the zc.buildout tools we create some directories and files:
+    Using the test tools we create some directories and files:
 
     >>> mkdir('dirtest')  # noqa F821
     >>> rotate_archives('dirtest', 'a')
@@ -960,7 +960,7 @@ def backup_blobs_archive(
     For tests, see tests/backup_blobs_archive.rst.
     """
     if incremental_blobs and not timestamps:
-        # This should have been caught by buildout already,
+        # This should have been caught when reading the configuration,
         # but we may trigger it in tests.
         raise Exception("Cannot have incremental_blobs without timestamps.")
     source = source.rstrip(os.sep)

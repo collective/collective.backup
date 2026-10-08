@@ -9,8 +9,8 @@ This especially tests backing up to directories with the option
 
 Import stuff.
 
-    >>> from collective.recipe.backup.copyblobs import backup_blobs
-    >>> from collective.recipe.backup.copyblobs import restore_blobs
+    >>> from plone.backup.copyblobs import backup_blobs
+    >>> from plone.backup.copyblobs import restore_blobs
     >>> import os
     >>> import time
 
@@ -104,7 +104,7 @@ Wait a while, so we get a different timestamp, and then change some stuff.
     d  blobs.20...-...-...-...-...
     d  latest
     >>> print(os.path.realpath('backups/latest'))
-    /sample-buildout/backups/blobs.20...-...-...-...-...
+    /sample-project/backups/blobs.20...-...-...-...-...
     >>> backup1 = sorted(os.listdir('backups'))[1]
     >>> timestamp1 = backup1[len('blobs.'):]
     >>> timestamp0 < timestamp1
@@ -149,7 +149,7 @@ Pretend there is a newer filestorage backup and a blob change.
     >>> len(sorted(os.listdir('backups')))  # The dots could shadow a third backup
     3
     >>> print(os.path.realpath('backups/latest'))
-    /sample-buildout/backups/blobs.2100-01-01-00-00-00
+    /sample-project/backups/blobs.2100-01-01-00-00-00
     >>> ls('backups', 'blobs.2100-01-01-00-00-00', 'blobs')
     d  dir
     -  one.txt
@@ -178,7 +178,7 @@ Remove the oldest filestorage backup.
     >>> len(sorted(os.listdir('backups')))
     2
     >>> print(os.path.realpath('backups/latest'))
-    /sample-buildout/backups/blobs.2100-01-01-00-00-00
+    /sample-project/backups/blobs.2100-01-01-00-00-00
 
 Cleanup:
 

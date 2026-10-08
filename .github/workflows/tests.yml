@@ -30,12 +30,13 @@ jobs:
         uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.config[0] }}-${{ hashFiles('setup.*', 'tox.ini') }}
+          key: ${{ runner.os }}-pip-${{ matrix.config[0] }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.config[0] }}-
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: |
+          sudo apt-get install -y rsync
           python -m pip install --upgrade pip
           pip install tox
       - name: Test

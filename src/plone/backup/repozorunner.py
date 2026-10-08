@@ -1,8 +1,8 @@
 """Wrapper that invokes repozo.
 
-There are three main methods, these get called by the generated scripts. So
-backup_main() for bin/backup, snapshot_main() for bin/snapshotbackup and
-restore_main() for bin/restore.
+There are two main methods, these get called via plone.backup.main.
+backup_main() for bin/backup and friends, restore_main() for bin/restore
+and friends.
 
 backup_arguments() and restore_arguments() determine the arguments that are to
 be passed to bin/repozo.
@@ -12,8 +12,8 @@ filling up the harddisk.
 
 """
 
-from collective.recipe.backup import config
 from operator import itemgetter
+from plone.backup import config
 
 import logging
 import os
@@ -34,15 +34,14 @@ def quote_command(command):
 
 
 def backup_main(
-    bin_dir,
+    repozo,
     storage,
     keep,
     full,
     verbose,
     backup_method=config.STANDARD_BACKUP,
 ):
-    """Main method, gets called by generated bin/backup."""
-    repozo = os.path.join(bin_dir, "repozo")
+    """Back up the filestorage with repozo."""
     fs = storage["datafs"]
     if backup_method == config.STANDARD_BACKUP:
         location = storage["backup_location"]
@@ -70,7 +69,7 @@ def backup_main(
 
 
 def restore_main(
-    bin_dir,
+    repozo,
     storage,
     verbose,
     date=None,
@@ -79,7 +78,7 @@ def restore_main(
     zip_restore=False,
     only_check=False,
 ):
-    """Main method, gets called by generated bin/restore.
+    """Restore the filestorage with repozo.
 
     If only_check is True, we only perform checks.
     Most importantly: check if the backup exists.
@@ -96,7 +95,6 @@ def restore_main(
             "alt_restore and zip_restore."
         )
         sys.exit(1)
-    repozo = os.path.join(bin_dir, "repozo")
     logger.debug("If things break: did you stop zope?")
     if restore_snapshot:
         backup_location = storage["snapshot_location"]

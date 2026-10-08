@@ -6,60 +6,42 @@ Location
 You should not mix backup locations; it is confusing for the recipe
 (or at least its authors) when backups end up in the same directory::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... location = ${buildout:directory}/var/loc1
-    ... blobbackuplocation = ${buildout:directory}/var/loc1
-    ... snapshotlocation = ${buildout:directory}/var/loc2
-    ... blobsnapshotlocation = ${buildout:directory}/var/loc2
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_LOCATION=loc1
+    ... PLONE_BACKUP_BLOBBACKUPLOCATION=loc1
+    ... PLONE_BACKUP_SNAPSHOTLOCATION=loc2
+    ... PLONE_BACKUP_BLOBSNAPSHOTLOCATION=loc2
     ... """)
-    >>> print(system('bin/buildout'))
-    While:
-      Installing.
-      Getting section backup.
-      Initializing section backup.
+    >>> print(system(generate))
     Error: These must be distinct locations:
-    blobbackuplocation = /sample-buildout/var/loc1
-    blobsnapshotlocation = /sample-buildout/var/loc2
-    location = /sample-buildout/var/loc1
-    snapshotlocation = /sample-buildout/var/loc2
-    <BLANKLINE>
+    blobbackuplocation = loc1
+    blobsnapshotlocation = loc2
+    location = loc1
+    snapshotlocation = loc2
 
 Some of these locations might be an empty string in some cases, which
 is probably grudgingly allowed, at least by this particular check.
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... enable_zipbackup = true
-    ... location =
-    ... blobbackuplocation =
-    ... snapshotlocation =
-    ... blobsnapshotlocation =
-    ... ziplocation =
-    ... blobziplocation =
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... PLONE_BACKUP_LOCATION=
+    ... PLONE_BACKUP_BLOBBACKUPLOCATION=
+    ... PLONE_BACKUP_SNAPSHOTLOCATION=
+    ... PLONE_BACKUP_BLOBSNAPSHOTLOCATION=
+    ... PLONE_BACKUP_ZIPLOCATION=
+    ... PLONE_BACKUP_BLOBZIPLOCATION=
     ... """)
-    >>> print(system('bin/buildout'))
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/zipbackup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/ziprestore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/zipbackup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/ziprestore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
 
 
@@ -71,23 +53,16 @@ create folders when scripts are called.
 
 We'll use all options, except the blob options for now::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... backup_blobs = false
-    ... location = /my/unusable/path/for/backup
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... PLONE_BACKUP_LOCATION=/my/unusable/path/for/backup
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    Removed script '/sample-project/bin/zipbackup'.
+    Removed script '/sample-project/bin/ziprestore'.
     utils: WARNING: Not able to create /my/unusable/path/for/backup
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>

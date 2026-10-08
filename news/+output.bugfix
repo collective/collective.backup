@@ -1,0 +1,2 @@
+Print the output of ``pre_command``, ``post_command``, ``rsync`` and ``tar`` as text instead of as bytes.
+[jladage]

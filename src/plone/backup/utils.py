@@ -1,30 +1,17 @@
 # Small utility methods.
-from collective.recipe.backup import config
+from plone.backup import config
 
+import builtins
 import logging
 import os
 import shutil
 import subprocess
 import sys
 
-try:
-    from builtins import input as raw_input
-except ImportError:
-    # Python 2 has raw_input available by default.
-    pass
-
-
 logger = logging.getLogger("utils")
 
 # For zc.buildout's system() method:
 MUST_CLOSE_FDS = not sys.platform.startswith("win")
-
-try:
-    # Python 2
-    stringtypes = basestring
-except NameError:
-    # Python 3
-    stringtypes = str
 
 
 def system(command, input=""):
@@ -47,6 +34,7 @@ def system(command, input=""):
     result = o.read() + e.read()
     o.close()
     e.close()
+    result = result.decode(errors="replace")
     # Return the result plus a return value (0: all is fine)
     return result, p.wait()
 
@@ -70,7 +58,7 @@ def ask(question, default=True, exact=False):
         if default is False:
             yn = yn.replace("n", "N")
         q = f"{question} ({yn})? "
-        input = raw_input(q)
+        input = builtins.input(q)
         if input:
             answer = input
         else:
@@ -197,22 +185,51 @@ def try_create_folder(pathdir):
         return
 
 
-def get_date_from_args():
-    # Try to find a date in the command line arguments
-    date = None
-    for arg in sys.argv:
-        if arg in ("-q", "-n", "--quiet", "--no-prompt"):
-            continue
-        if arg.find("restore") != -1:
-            continue
+def to_bool(option):
+    if option is None:
+        return False
+    if not isinstance(option, str):
+        return bool(option)
+    option = option.lower()
+    return option in ("true", "yes", "on", "1")
 
-        # We can assume this argument is a date
-        date = arg
-        logger.debug(
-            "Argument passed to bin/restore, we assume it is "
-            "a date that we have to pass to repozo: %s.",
-            date,
-        )
-        logger.info("Date restriction: restoring state at %s.", date)
-        break
-    return date
+
+def construct_path(base_dir, path):
+    """Return absolute path, taking into account base dir and ~ expansion.
+
+    Normal paths are relative to the base dir::
+
+      >>> base_dir = '/somewhere/project'
+      >>> construct_path(base_dir, 'var/filestorage/Data.fs')
+      '/somewhere/project/var/filestorage/Data.fs'
+
+    Absolute paths also work::
+
+      >>> construct_path(base_dir, '/var/filestorage/Data.fs')
+      '/var/filestorage/Data.fs'
+
+    And a tilde, too::
+
+      >>> userdir = os.path.expanduser('~')
+      >>> desired = userdir + '/var/filestorage/Data.fs'
+      >>> result = construct_path(base_dir, '~/var/filestorage/Data.fs')
+      >>> result == desired
+      True
+
+    Relative links are nicely normalized::
+
+      >>> construct_path(base_dir, '../var/filestorage/Data.fs')
+      '/somewhere/var/filestorage/Data.fs'
+
+    Also $HOME-style environment variables are expanded::
+
+      >>> os.environ['BACKUPDIR'] = '/var/backups'
+      >>> construct_path(base_dir, '$BACKUPDIR/myproject')
+      '/var/backups/myproject'
+
+    """
+    path = os.path.expanduser(path)
+    path = os.path.expandvars(path)
+    combination = os.path.join(base_dir, path)
+    normalized = os.path.normpath(combination)
+    return normalized

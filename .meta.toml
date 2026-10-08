@@ -14,31 +14,13 @@ jobs = [
    "circular",
    ]
 
-[pyproject]
-check_manifest_ignores = """
-    "buildout.cfg",
-"""
-
 [tox]
 use_test_matrix = false
-# Still define a test matrix so we can force Python 3.10 as minimum instead of 3.9.
-test_matrix = { "6.2" = ["*"], "6.1" = ["*"], "6.0" = ["3.10", "3.11", "3.12", "3.13"] }
+envlist_lines = """
+    py{310,311,312,313,314}
+"""
 test_environment_variables = """
     # Warnings interfere with the expected test output.
     PYTHONWARNINGS=ignore
 """
-envlist_lines = """
-    py{310,311,312,313,314}
-"""
-config_lines = """
-[testenv:py{310,311,312,313,314}]
-description = run the buildout tests
-use_develop = false
-skip_install = true
-deps =
-    -r requirements.txt
-commands_pre =
-    {envbindir}/buildout -nc {toxinidir}/buildout.cfg buildout:directory={envdir} buildout:develop={toxinidir}
-commands =
-    {envbindir}/test {posargs:-cv}
-"""
+test_runner = "pytest"

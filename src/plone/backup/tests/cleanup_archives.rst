@@ -5,7 +5,7 @@ Test the copyblobs.cleanup_archive function
 
 Import stuff.
 
-    >>> from collective.recipe.backup.copyblobs import cleanup_archives
+    >>> from plone.backup.copyblobs import cleanup_archives
     >>> import time
     >>> import os
 

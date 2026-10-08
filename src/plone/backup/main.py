@@ -1,9 +1,9 @@
 """Functions that invoke repozo and/or the blob backup."""
 
-from collective.recipe.backup import config
-from collective.recipe.backup import copyblobs
-from collective.recipe.backup import repozorunner
-from collective.recipe.backup import utils
+from plone.backup import config
+from plone.backup import copyblobs
+from plone.backup import repozorunner
+from plone.backup import utils
 
 import logging
 import sys
@@ -12,7 +12,7 @@ logger = logging.getLogger("backup")
 
 
 def backup_main(
-    bin_dir,
+    repozo,
     storage,
     keep,
     full,
@@ -44,7 +44,7 @@ def backup_main(
     )
     if not only_blobs:
         result = repozorunner.backup_main(
-            bin_dir, storage, keep, full, verbose, backup_method
+            repozo, storage, keep, full, verbose, backup_method
         )
         if result:
             if backup_blobs:
@@ -176,7 +176,7 @@ def check_blobs(
 
 
 def restore_check(
-    bin_dir,
+    repozo,
     storage,
     verbose,
     backup_blobs,
@@ -190,6 +190,7 @@ def restore_check(
     rsync_options="",
     zip_restore=False,
     blob_timestamps=False,
+    date=None,
     **kwargs,
 ):
     """Method to check that a restore will work.
@@ -203,8 +204,8 @@ def restore_check(
             "alt_restore and zip_restore."
         )
         sys.exit(1)
-    # Try to find a date in the command line arguments
-    date = utils.get_date_from_args()
+    if date:
+        logger.info("Date restriction: restoring state at %s.", date)
 
     if not kwargs.get("no_prompt"):
         question = "\n"
@@ -225,7 +226,7 @@ def restore_check(
     # First run some checks.
     if not only_blobs:
         result = repozorunner.restore_main(
-            bin_dir,
+            repozo,
             storage,
             verbose,
             date,
@@ -253,7 +254,7 @@ def restore_check(
 
 
 def restore_main(
-    bin_dir,
+    repozo,
     storage,
     verbose,
     backup_blobs,
@@ -268,12 +269,13 @@ def restore_main(
     zip_restore=False,
     blob_timestamps=False,
     incremental_blobs=False,
+    date=None,
     **kwargs,
 ):
     """Main method, gets called by generated bin/restore."""
     # First run several checks, and get the date that should be restored.
     date = restore_check(
-        bin_dir,
+        repozo,
         storage,
         verbose,
         backup_blobs,
@@ -288,12 +290,13 @@ def restore_main(
         zip_restore=zip_restore,
         blob_timestamps=blob_timestamps,
         incremental_blobs=incremental_blobs,
+        date=date,
         **kwargs,
     )
     # Checks have passed, now do the real restore.
     if not only_blobs:
         result = repozorunner.restore_main(
-            bin_dir, storage, verbose, date, restore_snapshot, alt_restore, zip_restore
+            repozo, storage, verbose, date, restore_snapshot, alt_restore, zip_restore
         )
         if result:
             if backup_blobs:

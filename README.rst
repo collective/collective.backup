@@ -1,8 +1,7 @@
-Easy Zope backup/restore recipe for buildout
-********************************************
+plone.backup
+************
 
-.. image:: https://github.com/collective/collective.recipe.backup/workflows/tests/badge.svg
-    :target: https://github.com/collective/collective.recipe.backup/actions?query=workflow%3Atests
+Easy backup and restore of a Plone (or Zope) ZODB filestorage and blobstorage.
 
 .. contents::
 
@@ -10,400 +9,405 @@ Easy Zope backup/restore recipe for buildout
 Introduction
 ------------
 
-This recipe is mostly a wrapper around the ``bin/repozo`` script in
-your Zope buildout.  It requires that this script is already made
-available.  If this is not the case, you will get an error like this
-when you run one of the scripts: ``bin/repozo: No such file or
-directory``.  This should be there when you
-are using ``plone.recipe.zeoserver``.  If this is
-not the case, the easiest way of getting a ``bin/repozo`` script is to
-add a new section in your ``buildout.cfg`` (do not forget to add it in the
-``parts`` directive)::
+``plone.backup`` is a wrapper around ``repozo``, the ZODB backup tool.
+Looking up the settings for ``repozo`` and backing up the blobstorage is a chore,
+and you have to pick a directory where to put the backups.
+This package provides **sensible defaults** for your common backup tasks.
 
-  [repozo]
-  recipe = zc.recipe.egg
-  eggs = ZODB
-  # or this for an older version:
-  # eggs = ZODB3
-  scripts = repozo
-  dependent-scripts = true
+This is the standalone successor of the zc.buildout recipe
+`collective.recipe.backup <https://pypi.org/project/collective.recipe.backup/>`_.
+It has the same features, the same options, and the same commands,
+but it does not need buildout.
+It is meant for projects created with `cookieplone <https://github.com/plone/cookieplone>`_,
+and for Docker based deployments.
 
-``bin/repozo`` is a Zope script to make backups of your ``Data.fs``.
-Looking up the settings can be a chore. And you have to pick a
-directory where to put the backups. This recipe provides **sensible
-defaults** for your common backup tasks. Making backups a piece of
-cake is important!
+The options are environment variables, for example ``PLONE_BACKUP_KEEP=3``.
+So you can configure it with a ``.env`` file in your project,
+or with the ``environment`` of a container.
 
-- ``bin/backup`` makes an incremental backup.
+These are the commands:
 
-- ``bin/restore`` restores the latest backup created by the backup script.
+- ``backup`` makes an incremental backup.
 
-- ``bin/snapshotbackup`` makes a full snapshot backup, separate from the
-  regular backups. Handy right before a big change in the site.
+- ``restore`` restores the latest backup created by the backup command.
 
-- ``bin/snapshotrestore`` restores the latest full snapshot backup.
+- ``snapshotbackup`` makes a full snapshot backup, separate from the
+  regular backups.  Handy right before a big change in the site.
 
-- ``bin/zipbackup`` makes a zip backup.  This zips the Data.fs and the
-  blobstorage, handy for copying production data to your local
-  machine, especially the blobstorage with its many files.
-  Actually, zipping the Data.fs is standard,
-  and we do not zip the blobstorage,
-  because most files in there are already compressed.
-  But we do combine the blobs in one tar archive.
-  *Note*: the Data.fs and blobstorage (or other storages) are *not* combined
-  in one file; you need to download multiple files.  Enable this
-  script by using the ``enable_zipbackup`` option.
+- ``snapshotrestore`` restores the latest full snapshot backup.
 
-- ``bin/ziprestore`` restores the latest zipbackup.
+- ``zipbackup`` makes a zip backup.  This zips the Data.fs and puts
+  the blobstorage in one tar archive, handy for copying production data
+  to your local machine.  Enable this with ``PLONE_BACKUP_ENABLE_ZIPBACKUP=true``.
+
+- ``ziprestore`` restores the latest zipbackup.
+
+- ``altrestore`` restores from an alternative source, see
+  `Alternative restore source`_.
+
+You can run them directly, for example ``plone-backup snapshotbackup``,
+or generate the familiar ``bin/backup``, ``bin/restore``, etcetera scripts
+with ``plone-backup generate``.
 
 
 Compatibility
 -------------
 
-Version 6 of the recipe is tested with Python 3.10-3.14.
+``plone.backup`` is tested with Python 3.10-3.14.
 In Plone terms it works fine on Plone 6.0, 6.1, 6.2.
+It depends on ``ZODB``, which provides the ``repozo`` script.
 
-Use version 5 if you need compatibility with Python 3.8, 3.9, and Plone 5.2.
-
-Note that the integration with ``plone.recipe.zope2instance`` is not tested.
-It would pull in too many dependencies, like Zope and ZODB.
-
-
-Development
------------
-
-- Code repository: https://github.com/collective/collective.recipe.backup
-
-- Issue tracker: https://github.com/collective/collective.recipe.backup/issues
-
-- Obvious fixes, like fixing typos, are fine on master.
-  For larger changes or if you are unsure, please create a branch or a pull request.
-
-- The code comes with a ``buildout.cfg``.  Please bootstrap the
-  buildout and run the created ``bin/test`` to see if the tests still
-  pass.  Please try to add tests if you add code.
-  To run the tests for all supported Python versions, run ``tox``.
-
-- The long description of this package (as shown on PyPI), used to
-  contain a big file with lots of test code that showed how to use the
-  recipe.  This grew too large, so we left it out.  It is probably
-  still good reading if you are wondering about the effect some
-  options have.  See ``src/collective/recipe/backup/tests/*.rst``.
-
-- We are tested on GitHub Actions:
-  https://github.com/collective/collective.recipe.backup/actions
-
-- Questions and comments to https://community.plone.org or to
-  `Maurits van Rees <mailto:maurits@vanrees.org>`_.
+Backing up the blobstorage uses ``rsync`` by default,
+and archiving it uses ``tar``.
+The ``incremental_blobs`` option needs GNU ``tar``.
 
 
-Example usage
--------------
+Usage in a cookieplone project
+------------------------------
 
-The simplest way to use this recipe is to add a part in ``buildout.cfg`` like this::
+Add ``plone.backup`` to the dependencies of your backend, for example in
+``backend/pyproject.toml``, and install it.  Then, in the ``backend`` directory::
 
-    [buildout]
-    parts = backup
+    uv run plone-backup backup
 
-    [backup]
-    recipe = collective.recipe.backup
+By default the filestorage is ``var/filestorage/Data.fs`` and the
+blobstorage is ``var/blobstorage``, relative to the current directory.
+Check the ``db_filestorage_location`` and ``db_blob_location`` in
+``instance.yaml``.  With the default cookieplone settings the data is in
+``instance/var``, so you put this in ``backend/.env``::
 
-You can set lots of extra options, but the recipe authors like to
-think they have created sane defaults, so this single line stating the
-recipe name should be enough in most cases.
+    PLONE_BACKUP_VAR_DIR=instance/var
 
-Running the buildout adds the ``backup``,
-``snapshotbackup``, ``zipbackup``, ``restore``, ``snapshotrestore``
-and ``ziprestore`` scripts to the ``bin/`` directory of the buildout.
-Some are not added by default, others can be switched off.
+Now ``uv run plone-backup backup`` backs up ``instance/var/filestorage/Data.fs``
+to ``instance/var/backups``, and ``instance/var/blobstorage`` to
+``instance/var/blobstoragebackups``.
+
+If you prefer scripts, run ``uv run plone-backup generate``.
+This creates ``bin/backup``, ``bin/snapshotbackup``, ``bin/restore`` and
+``bin/snapshotrestore``, with the options of that moment baked in.
+Run ``plone-backup generate`` again after changing an option.
+Use ``--bin-dir`` or ``PLONE_BACKUP_BIN_DIR`` to put the scripts elsewhere.
+
+Some ``Makefile`` targets you may want to add::
+
+    .PHONY: backup
+    backup: ## Backup the database
+    	@uv run plone-backup backup
+
+    .PHONY: snapshot
+    snapshot: ## Make a snapshot backup of the database
+    	@uv run plone-backup snapshotbackup
+
+    .PHONY: restore
+    restore: ## Restore the latest backup of the database
+    	@uv run plone-backup restore
+
+
+Docker image
+------------
+
+The ``Dockerfile`` builds an image that makes scheduled backups.
+It runs `supercronic <https://github.com/aptible/supercronic>`_,
+which passes the environment to the backup jobs, and logs their
+output to the container log.
+
+The image expects the data of Plone in ``/data``, as the
+``plone/plone-backend`` and ``plone/plone-zeo`` images have it,
+and writes the backups to ``/backups``.  It runs as user ``plone``
+with uid 500, like those images, so it can read and restore their files.
+
+These variables are only used by the image:
+
+``PLONE_BACKUP_CRON``
+    Cron schedule for the ``backup`` command.  Default in the image: ``0 3 * * *``.
+    Set it to an empty string to disable it.
+``PLONE_BACKUP_SNAPSHOT_CRON``
+    Cron schedule for the ``snapshotbackup`` command.  Default: not set.
+
+The image sets ``PLONE_BACKUP_VAR_DIR=/data`` and ``PLONE_BACKUP_LOCATIONPREFIX=/backups``.
+All other options work as described below.
+
+An example ``docker-compose.yml`` snippet, with ZEO::
+
+    services:
+      db:
+        image: plone/plone-zeo:6
+        volumes:
+          - vol-site-data:/data
+
+      backup:
+        image: ghcr.io/plone/plone-backup:latest
+        environment:
+          PLONE_BACKUP_CRON: "0 3 * * *"
+          PLONE_BACKUP_SNAPSHOT_CRON: "0 4 * * 0"
+          PLONE_BACKUP_KEEP: 7
+        volumes:
+          - vol-site-data:/data
+          - vol-backups:/backups
+
+    volumes:
+      vol-site-data: {}
+      vol-backups: {}
+
+You can also use ``env_file: backup.env`` instead of ``environment``.
+
+Run a command once, for example a snapshot right before an update::
+
+    docker compose run --rm backup snapshotbackup
+
+To restore, first stop Plone, so nothing writes to the database::
+
+    docker compose stop backend db
+    docker compose run --rm backup restore
+    docker compose start db backend
+
+Without a terminal, for example in a script, add ``--no-prompt`` to skip
+the confirmation question.  To restore the state at a certain date, pass
+it like this: ``docker compose run --rm backup restore 2026-10-01-03-00``.
+
+Build the image yourself with ``docker build -t plone-backup .``.
+
+Note that ``/backups`` is a volume on the same machine as your data.
+You should copy your backups to a different machine, or mount ``/backups``
+from elsewhere.
 
 
 Backed up data
 --------------
 
-Which data does this recipe backup?
+Which data do we backup?
 
-- The Zope Object DataBase (ZODB) filestorage, by default located at
-  ``var/filestorage/Data.fs``.
+- The ZODB filestorage, by default located at ``var/filestorage/Data.fs``.
 
-- The blobstorage (since version 2.0) if your buildout uses it, by
-  default located at ``var/blobstorage``.
+- The blobstorage, by default located at ``var/blobstorage``.
 
-
-Data that is *not* backed up
-----------------------------
-
-Which data does this recipe *not* backup?  Everything else of course,
+Which data do we *not* backup?  Everything else of course,
 but specifically:
 
-- Data stored in ``RelStorage`` will *not* be backed up.  (You could
-  still use this recipe to back up the filesystem blobstorage,
-  possibly with the ``only_blobs`` option.)
-
-- Other data stored in SQL, perhaps via SQLAlchemy, will *not* be
-  backed up.
-
-- It does *not* create a backup of your entire buildout directory.
-
-
-Is your backup backed up?
--------------------------
-
-Note that the backups are by default created in the ``var`` directory
-of the buildout, so if you accidentally remove the entire buildout,
-you also lose your backups.  It should be standard practice to use the
-``location`` option to specify a backup location in for example the
-home directory of the user.  You should also arrange to copy that
-backup to a different machine/country/continent/planet.
+- Data stored in ``RelStorage`` will *not* be backed up.  You could
+  still use this package to back up the filesystem blobstorage,
+  possibly with the ``only_blobs`` option.
+- Other data stored in SQL, perhaps via SQLAlchemy, will *not* be backed up.
+- It does *not* create a backup of your project directory.
 
 
 Backup
 ------
 
-Calling ``bin/backup`` results in a normal incremental repozo backup
-that creates a backup of the ``Data.fs`` in ``var/backups``.  When you
-have a blob storage it is by default backed up to
+The ``backup`` command makes a normal incremental ``repozo`` backup of the
+``Data.fs`` in ``var/backups``.  The blobstorage is backed up to
 ``var/blobstoragebackups``.
 
+The ``snapshotbackup`` command places a full backup in ``var/snapshotbackups``,
+and the blobs in ``var/blobstoragesnapshots``.  It does not interfere with
+the regular backups.
 
-Snapshots
----------
-
-A quick backup just before updating the production server is a good
-idea.  But you may not want to interfere with the regular backup
-regime.  For that, the ``bin/snapshotbackup`` is great. It places a
-full backup in, by default, ``var/snapshotbackups``.
-
-
-Zipbackups
-----------
-
-For quickly grabbing the current state of a production database so you
-can download it to your development laptop, you want a full and zipped
-backup.  The zipped part is important for the blobstorage, because you
-do not want to use ``scp`` to recursively copy over all those blob
-files: downloading one tarball is faster.
-
-You can use the ``bin/zipbackup`` script for this.  This script
-overrides a few settings, ignoring whatever is set in the buildout
-config section:
+The ``zipbackup`` command places a full backup in ``var/zipbackups``
+and a tarball of the blobstorage in ``var/blobstoragezips``.
+It overrides a few settings:
 
 - ``archive_blob`` is turned on.
-
 - ``keep`` is set to 1 to avoid keeping lots of needless backups.
-
 - ``keep_blob_days`` is ignored because it is a full backup.
-
-The script places a full backup in, by default, ``var/zipbackups`` and
-it puts a tarball of the blobstorage in ``var/blobstoragezips``.
-
-This script is not created by default.
-You can enable it by setting the ``enable_zipbackup`` option to true.
-Also, if ``backup_blobs`` is false, the scripts are useless, so we do not create them, even when you have enabled them explicitly.
 
 
 Restore
 -------
 
-Calling ``bin/restore`` restores the very latest normal incremental
-``repozo`` backup and restores the blobstorage if you have that.
+The ``restore`` command restores the very latest normal incremental
+``repozo`` backup and the blobstorage.
+``snapshotrestore`` restores the latest snapshot backup,
+``ziprestore`` the zipbackup.
 
-You can restore the very latest snapshotbackup with ``bin/snapshotrestore``.
-
-You can restore the zipbackup with ``bin/ziprestore``.
-
-You can also restore the backup as of a certain date. Just pass a date argument.
+You can also restore the backup as of a certain date. Pass a date argument.
 According to ``repozo``: specify UTC (not local) time.
 The format is ``yyyy-mm-dd[-hh[-mm[-ss]]]``.
-So as a simple example, restore to 25 december 1972::
+So as a simple example, restore to 25 December 1972::
 
-    bin/restore 1972-12-25
+    plone-backup restore 1972-12-25
 
 or to that same date, at 2,03 seconds past 1::
 
     bin/restore 1972-12-25-01-02-03
 
-Since version 2.3 this also works for restoring blobs.
-We restore the directory from the first backup at or before the specified date.
-(Note that before version 4.0 we restored the directory from the first backup after the specified date,
-which should be fine as long as you did not do a database pack in between.)
+For blobs, we restore the directory from the first backup at or before the
+specified date.
 
-Since version 2.0, the restore scripts ask for confirmation before
-starting the restore, as this is a potentially dangerous command.
-("Oops, I have restored the live site but I meant to restore the test
-site.")  You need to explicitly type 'yes'::
+The restore commands ask for confirmation before starting the restore,
+as this is a potentially dangerous command.  You need to explicitly type
+``yes``.  With ``-n`` or ``--no-prompt`` you skip this question::
 
-    This will replace the filestorage (Data.fs).
-    This will replace the blobstorage.
+    This will replace the filestorage:
+        /path/to/var/filestorage/Data.fs
+    This will replace the blobstorage:
+        /path/to/var/blobstorage
     Are you sure? (yes/No)?
 
 Note that for large filestorages and blobstorages **it may take long to restore**.
 You should do a test restore and check how long it takes.
-Seconds?  Minutes?  Hours?
-Is that time acceptable or should you take other measures?
 
-Names of created scripts
-------------------------
 
-A backup part will normally be called ``[backup]``, leading to a
-``bin/backup`` and ``bin/snapshotbackup``.  Should you name your part
-something else,  the script names will also be different, as will the created
-``var/`` directories (since version 1.2)::
+Command line
+------------
 
-    [buildout]
-    parts = plonebackup
+``plone-backup`` has these options and commands::
 
-    [plonebackup]
-    recipe = collective.recipe.backup
-    enable_zipbackup = true
+    plone-backup [-e ENV_FILE] COMMAND
 
-That buildout snippet will create these scripts::
+    -e, --env-file  read PLONE_BACKUP_* variables from this file,
+                    default: .env in the current directory, if it exists.
+                    Variables in the environment win.
+
+    backup, zipbackup, snapshotbackup,
+    restore, ziprestore, snapshotrestore, altrestore
+                    Run a backup or restore.  Options:
+                    -q, --quiet: only show warnings and errors
+                    -n, --no-prompt: do not ask for confirmation
+                    and for the restore commands an optional date.
+    generate        Generate scripts for the commands, see below.
+    show            Show the computed options.
+    crontab         Print a crontab, see `Docker image`_.
+
+The ``-q`` option is useful in a cron job: you only get output when there is
+a problem.  It also works for the generated scripts: ``bin/backup -q``.
+
+
+Names of the scripts
+--------------------
+
+With ``PLONE_BACKUP_NAME`` you can change the name of the generated scripts,
+and the default names of the backup directories.
+With ``PLONE_BACKUP_NAME=plonebackup`` and ``PLONE_BACKUP_ENABLE_ZIPBACKUP=true``,
+``plone-backup generate`` creates these scripts::
 
     bin/plonebackup
-    bin/plonebackup-full
     bin/plonebackup-zip
     bin/plonebackup-snapshot
     bin/plonebackup-restore
     bin/plonebackup-ziprestore
     bin/plonebackup-snapshotrestore
 
+And the backups go to ``var/plonebackups``, ``var/plonebackup-snapshots``,
+etcetera.  Use several env files to generate several sets of scripts::
 
-Supported options
------------------
+    plone-backup --env-file files.env generate
+    plone-backup --env-file blobs.env generate
 
-The recipe supports the following options, none of which are needed by
-default. The most common ones to change are ``location`` and
-``blobbackuplocation``, as those allow you to place your backups in
-some system-wide directory like ``/var/zopebackups/instancename/`` and
-``/var/zopebackups/instancename-blobs/``.
+When you generate scripts again, scripts that we generated earlier
+for the same name and are no longer wanted, are removed.  For example
+``bin/zipbackup`` when you have switched off ``PLONE_BACKUP_ENABLE_ZIPBACKUP``.
+
+
+Options
+-------
+
+None of the options are needed by default.
+Each option is an environment variable: the option name in capitals,
+with ``PLONE_BACKUP_`` in front.  So option ``keep`` is ``PLONE_BACKUP_KEEP``,
+and ``blobbackuplocation`` is ``PLONE_BACKUP_BLOBBACKUPLOCATION``.
+Boolean options accept ``true``, ``yes``, ``on`` and ``1`` as true,
+everything else is false.
+
+Relative paths are relative to ``PLONE_BACKUP_BASE_DIR``, by default the
+current directory.  But relative paths in the ``location`` options
+(``location``, ``snapshotlocation``, ``ziplocation``, ``blobbackuplocation``,
+``blobsnapshotlocation``, ``blobziplocation``) are relative to the
+``locationprefix``.  In paths, ``~`` (home dir) and ``$VARIABLE``-style
+environment variables are expanded.
 
 .. Note: keep this in alphabetical order please.
 
+``alternative_restore_source``
+    You can restore from an alternative source.  See `Alternative restore source`_.
+
 ``archive_blob``
     Use ``tar`` archiving functionality. ``false`` by default. Set it to ``true``
-    and backup/restore will be done with ``tar`` command. Note that ``tar``
-    command must be available on machine if this option is set to ``true``.
+    and backup/restore will be done with the ``tar`` command.
     This option also works with snapshot backup/restore commands. As this
     counts as a full backup ``keep_blob_days`` is ignored.
     See the ``compress_blob`` option if you want to compress the archive.
 
-``alternative_restore_source``
-    You can restore from an alternative source.  Use case: first make
-    a backup of your production site, then go to the testing or
-    staging server and restore the production data there.  See
-    `Alternative restore source`_
-
-``alternative_restore_sources``
-    Backwards compatibility spelling for ``alternative_restore_source``.
-    This will no longer work in version 7.
-
 ``backup_blobs``
-    Backup the blob storage.  Default is ``True``.  This requires the
-    ``blob_storage`` location to be set.  If no ``blob_storage``
-    location has been set and we cannot find one by looking in the
-    other buildout parts, we quit with an error (since version 2.22).
+    Backup the blob storage.  Default is ``true``.
     If ``backup_blobs`` is false, ``enable_zipbackup`` cannot be true,
-    because the ``zipbackup`` script is not useful then.
+    because the ``zipbackup`` command is not useful then.
+
+``base_dir``
+    Directory that relative paths are relative to.
+    Default: the current directory.
+
+``bin_dir``
+    Directory for the scripts that ``plone-backup generate`` creates.
+    Default: ``bin``.
 
 ``blob_storage``
     Location of the directory where the blobs (binary large objects)
-    are stored.  This is used in Plone 4 and higher, or on Plone 3 if
-    you use ``plone.app.blob``.  This option is ignored if backup_blobs is
-    ``false``.  The location is not set by default.  When there is a part
-    using ``plone.recipe.zeoserver``, ``plone.recipe.zope2instance`` or
-    ``plone.recipe.zope2zeoserver``, we check if that has a
-    blob-storage option and use that as default.  Note that we pick
-    the first one that has this option and we do not care about
-    shared-blob settings, so there are probably corner cases where we
-    do not make the best decision here.  Use this option to override
-    it in that case.
-
-``blob-storage``
-    Alternative spelling for the preferred ``blob_storage``, as
-    ``plone.recipe.zope2instance`` spells it as ``blob-storage`` and we are
-    using underscores in all the other options.  Pick one.
+    are stored.  Default: ``blobstorage`` in the ``var_dir``.
 
 ``blob_timestamps``
-    New in version 4.0.  Default is true (this was false before version 4.2).
+    Default is true.
     If false, we create ``blobstorage.0``.
     The next time, we rotate this to ``blobstorage.1`` and create a new ``blobstorage.0``.
     With ``blob_timestamps = true``, we create stable directories that we do not rotate.
     They get a timestamp, the same timestamp that the ZODB filestorage backup gets.
     For example: ``blobstorage.1972-12-25-01-02-03``.
     Or with ``archive_blob = true``: ``blobstorage.1972-12-25-01-02-03.tar``.
-    Because the filename is unpredictable, since version 4.1 we create a ``latest`` symlink
-    to the most recent backup.
-    Blob timestamps are not used with zipbackup, because this only keeps 1 backup,
-    which means there is no confusion about which filestorage backup it belongs to.
+    We create a ``latest`` symlink to the most recent backup.
+    Blob timestamps are not used with zipbackup, because this only keeps 1 backup.
+    Setting this to false is deprecated.
 
 ``blobbackuplocation``
     Directory where the blob storage will be backed up to.  Defaults
-    to ``var/blobstoragebackups`` inside the buildout directory.
+    to ``blobstoragebackups`` in the ``locationprefix``.
 
 ``blobsnapshotlocation``
     Directory where the blob storage snapshots will be created.
-    Defaults to ``var/blobstoragesnapshots`` inside the buildout
-    directory.
+    Defaults to ``blobstoragesnapshots`` in the ``locationprefix``.
 
 ``blobziplocation``
     Directory where the blob storage zipbackups will be created.
-    Defaults to ``var/blobstoragezips`` inside the buildout
-    directory.
+    Defaults to ``blobstoragezips`` in the ``locationprefix``.
 
 ``compress_blob``
-    New in version 4.0.  Default is false.
+    Default is false.
     This is only used when the ``archive_blob`` option is true.
     When switched on, it will compress the archive,
     resulting in a ``.tar.gz`` instead of a ``tar`` file.
     When restoring, we always look for both compressed and normal archives.
-    We used to always compress them, but in most cases it hardly decreases the size
-    and it takes a long time anyway.  I have seen archiving take 15 seconds,
-    and compressing take an additional 45 seconds.
-    The result was an archive of 5.0 GB instead of 5.1 GB.
+    In most cases compressing hardly decreases the size, and it takes long.
 
 ``datafs``
-    In case the ``Data.fs`` isn't in the default ``var/filestorage/Data.fs``
-    location, this option can overwrite it.
+    Location of the filestorage.
+    Default: ``filestorage/Data.fs`` in the ``var_dir``.
 
 ``debug``
     In rare cases when you want to know exactly what's going on, set debug to
-    ``true`` to get debug level logging of the recipe itself. ``repozo`` is also run
+    ``true`` to get debug level logging. ``repozo`` is also run
     with ``--verbose`` if this option is enabled.
 
 ``enable_snapshotrestore``
-    Having a ``snapshotrestore`` script is very useful in development
-    environments, but can be harmful in a production buildout. The
-    script restores the latest snapshot directly to your filestorage
-    and it used to do this without asking any questions whatsoever
-    (this has been changed to require an explicit ``yes`` as answer).
-    If you don't want a ``snapshotrestore`` script, set this option to false.
+    Default: true.  A ``snapshotrestore`` command is very useful in development
+    environments, but can be harmful in production.
+    If you don't want it, set this option to false.
 
 ``enable_zipbackup``
-    Create ``zipbackup`` and ``ziprestore`` scripts.  Default: false.
-    If ``backup_blobs`` is not on, these scripts are always disabled,
-    because they are not useful then.
+    Enable the ``zipbackup`` and ``ziprestore`` commands.  Default: false.
 
 ``full``
     By default, incremental backups are made. If this option is set to ``true``,
-    ``bin/backup`` will always make a full backup.
+    ``backup`` will always make a full backup.
 
 ``incremental_blobs``
-    New in version 4.0.  Default is false.
+    Default is false.
     When switched on, it will use the ``--listed-incremental`` option of ``tar``.
     Note: this only works with the GNU version of ``tar``.
     On Mac you may need to install this with ``brew install gnu-tar`` and change your ``PATH`` according to the instructions.
     It will create a metadata or `snapshot file <https://www.gnu.org/software/tar/manual/html_node/Incremental-Dumps.html>`_
-    so that a second call to the backup script will create a second tarball with only the differences.
-    For some reason, all directories always end up in the second tarball,
-    even when there are no changes; this may depend on the used file system.
+    so that a second backup will create a second tarball with only the differences.
     This option is ignored when the ``archive_blob`` option is false.
-    This option *requires* the ``blob_timestamps`` option to be true,
-    because it needs the tarball names to be stable, instead of getting rotated.
-    If you have explicitly set ``blob_timestamps`` to false, buildout will exit with an error.
+    This option *requires* the ``blob_timestamps`` option to be true.
     Note that the ``latest`` symlink to the most recent backup is not created with ``incremental_blobs`` true.
     For large blobstorages it may take long to restore, so do test it out.
-    But that is wise in all cases.
-    Essentially, this feature seems to trade off storage space reduction with restore time.
 
 ``keep``
     Number of full backups to keep. Defaults to ``2``, which means that the
@@ -412,73 +416,42 @@ some system-wide directory like ``/var/zopebackups/instancename/`` and
 
 ``keep_blob_days``
     Number of *days* of blob backups to keep.  Defaults to ``14``, so
-    two weeks.  This is **only** used for partial (full=False)
-    backups, so this is what gets used normally when you do a
-    ``bin/backup``.  This option has been added in 2.2.  For full
-    backups (snapshots) we just use the ``keep`` option.  Recommended
-    is to keep these values in sync with how often you do a ``zeopack`` on
-    the ``Data.fs``, according to the formula ``keep *
-    days_between_zeopacks = keep_blob_days``.  The default matches one
-    zeopack per seven days (``2*7=14``).
-    Since version 4.0, this option is ignored unless ``only_blobs`` is true.
-    Instead, we remove the blob backups that have no matching filestorage backup.
+    two weeks.  This is **only** used when ``only_blobs`` is true and
+    ``full`` is false.  Otherwise we remove the blob backups that have
+    no matching filestorage backup.
 
 ``location``
-    Location where backups are stored. Defaults to ``var/backups`` inside the
-    buildout directory.
+    Location where backups are stored. Defaults to ``backups`` in the ``locationprefix``.
 
 ``locationprefix``
     Location of the folder where all other backup and snapshot folders will
-    be created. Defaults to ``var/``.
+    be created. Defaults to the ``var_dir``.
     Note that this does not influence where we look for a source filestorage or blobstorage.
+
+``name``
+    Name of the scripts and default backup directories, see `Names of the scripts`_.
+    Default: ``backup``.
 
 ``only_blobs``
     Only backup the blobstorage, not the ``Data.fs`` filestorage.  False
-    by default.  May be a useful option if for example you want to
-    create one ``bin/filestoragebackup`` script and one
-    ``bin/blobstoragebackup`` script, using ``only_blobs`` in one and
-    ``backup_blobs`` in the other.
+    by default.  May be a useful option if for example you want one set of
+    scripts for the filestorage and one for the blobstorage, using
+    ``only_blobs`` in one and ``backup_blobs`` in the other.
 
 ``post_command``
     Command to execute after the backup has finished.  One use case
     would be to unmount the remote file system that you mounted
-    earlier using the ``pre_command``.  See that ``pre_command`` above for
-    more info.
+    earlier using the ``pre_command``.
 
 ``pre_command``
-    Command to execute before starting the backup.  One use case would
-    be to mount a remote file system using NFS or sshfs and put the
-    backup there.  Any output will be printed.  If you do not like
-    that, you can always redirect output somewhere else (``mycommand >
-    /dev/null`` on Unix).  Refer to your local Unix guru for more
-    information.  If the command fails, the backup script quits with
-    an error.  You can specify multiple commands.
+    Command to execute before starting the backup or restore.
+    One use case would be to mount a remote file system using NFS or sshfs and put the
+    backup there.  Any output will be printed.  If the command fails, we quit with
+    an error.  Use ``&&`` or ``;`` to run multiple commands.
 
-``quick``
-    Call ``repozo`` with the ``--quick`` option.  This option was
-    introduced to ``collective.recipe.backup`` in version 2.19, with
-    **default value true**.  Due to all the checksums that the repozo
-    default non-quick behavior does, an amount of data is read that is
-    three to four times as much as is in the actual filestorage.  With
-    the quick option it could easily be just a few kilobytes.
-    Theoretically the quick option is less safe, but it looks like it
-    can only go wrong when someone edits the ``.dat`` file in the
-    repository or removes a ``.deltafs`` file.
-
-    The ``quick`` option only influences the created ``bin/backup``
-    script.  It has no effect on the snapshot or restore scripts.
-
-    The repozo help says about this option: "Verify via md5 checksum
-    only the last incremental written.  This significantly reduces the
-    disk i/o at the (theoretical) cost of inconsistency.  This is a
-    probabilistic way of determining whether a full backup is
-    necessary."
-
-``rsync_options``
-    Add extra options to the default ``rsync -a`` command. Default is no
-    extra parameters. This can be useful for example when you want to restore
-    a backup from a symlinked directory, in which case
-    ``rsync_options = --no-l -k`` does the trick.
+``repozo``
+    The ``repozo`` script to use.  By default we look in the ``bin_dir``,
+    next to the Python that runs ``plone-backup``, and on the ``PATH``.
 
 ``rsync_hard_links_on_first_copy``
     When using ``rsync``, the blob files for the first backup are copied
@@ -487,113 +460,67 @@ some system-wide directory like ``/var/zopebackups/instancename/`` and
     Enable this option to also use hard links for the initial copy to further reduce
     disk usage.
     This is safe for ZODB blobs, since they are not modified in place.
-    The ``blob_storage`` and the backup folder ``blobbackuplocation``
+    The ``blob_storage`` and the ``blobbackuplocation``
     have to be in the same partition for hard links to be possible.
+
+``rsync_options``
+    Add extra options to the default ``rsync -a`` command. Default is no
+    extra parameters. This can be useful for example when you want to restore
+    a backup from a symlinked directory, in which case
+    ``--no-l -k`` does the trick.
 
 ``snapshotlocation``
     Location where snapshot backups of the filestorage are stored. Defaults to
-    ``var/snapshotbackups`` inside the buildout directory.
+    ``snapshotbackups`` in the ``locationprefix``.
 
 ``use_rsync``
     Use ``rsync`` with hard links for backing up the blobs.  Default is
-    true.  ``rsync`` is probably not available on all machines though, and
-    I guess hard links will not work on Windows.  When you set this to
-    false, we fall back to a simple copy (``shutil.copytree`` from
-    Python in fact).
+    true.  When you set this to false, we fall back to a simple copy.
+
+``var_dir``
+    The directory with the data of Plone.  Default: ``var``.
+    The defaults of ``datafs``, ``blob_storage`` and ``locationprefix`` are in here.
 
 ``ziplocation``
     Location where zip backups of the filestorage are stored. Defaults to
-    ``var/zipbackups`` inside the buildout directory.
+    ``zipbackups`` in the ``locationprefix``.
 
+An example ``.env`` file using various options::
 
-An example buildout snippet using various options, would look like this::
+    PLONE_BACKUP_LOCATION=/var/backups/myproject
+    PLONE_BACKUP_KEEP=2
+    PLONE_BACKUP_DATAFS=subfolder/myproject.fs
+    PLONE_BACKUP_FULL=true
+    PLONE_BACKUP_DEBUG=true
+    PLONE_BACKUP_SNAPSHOTLOCATION=snap/my
+    PLONE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?'
+    PLONE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' && echo 'We are done.'
 
-    [backup]
-    recipe = collective.recipe.backup
-    location = ${buildout:directory}/myproject
-    keep = 2
-    datafs = subfolder/myproject.fs
-    full = true
-    debug = true
-    snapshotlocation = snap/my
-    enable_snapshotrestore = true
-    pre_command = echo 'Can I have a backup?'
-    post_command =
-        echo 'Thanks a lot for the backup.'
-        echo 'We are done.'
+In a ``.env`` file, values may be quoted.  In double quotes, ``\n`` is a newline.
 
-Paths in directories or files can use relative (``../``) paths, and
-``~`` (home dir) and ``$BACKUP``-style environment variables are
-expanded.
-
-
-Cron job integration
---------------------
-
-``bin/backup`` is of course ideal to put in your cronjob instead of a whole
-``bin/repozo ....`` line. But you don't want the "INFO" level logging that you
-get, as you'll get that in your mailbox. In your cronjob, just add ``-q`` or
-``--quiet``, and ``bin/backup`` will shut up unless there's a problem.
-This option ignores the debug variable, if set to true in buildout.
-
-Speaking of cron jobs?  Take a look at `zc.recipe.usercrontab
-<https://pypi.org/project/z3c.recipe.usercrontab/>`_ if you want to handle
-cronjobs from within your buildout.  For example::
-
-    [backupcronjob]
-    recipe = z3c.recipe.usercrontab
-    times = 0 12 * * *
-    command = ${buildout:directory}/bin/backup
+If you see a warning about an unknown variable, check for typos:
+``PLONE_BACKUP_KEPE`` is ignored.
 
 
 Blob storage
 ------------
 
-We can backup the blob storage.  Plone uses a blob storage to store
-files (Binary Large OBjects) on the file system.
-When this is used, it should be backed up of course.  You
-must specify the source blob_storage directory where Plone (or Zope)
-stores its blobs.  As indicated earlier, when we do not set it
-specifically, we try to get the location from other parts, for example
-the ``plone.recipe.zope2instance`` recipe::
+Plone uses a blob storage to store files (Binary Large OBjects) on the file system.
+We back it up by default.
 
-    [buildout]
-    parts = instance backup
+You can choose to *only* backup blobs, or specifically *not* backup the blobs,
+for example to make separate scripts::
 
-    [instance]
-    recipe = plone.recipe.zope2instance
-    user = admin:admin
-    blob-storage = ${buildout:directory}/var/somewhere
+    # files.env
+    PLONE_BACKUP_NAME=filebackup
+    PLONE_BACKUP_BACKUP_BLOBS=false
 
-    [backup]
-    recipe = collective.recipe.backup
+    # blobs.env
+    PLONE_BACKUP_NAME=blobbackup
+    PLONE_BACKUP_ONLY_BLOBS=true
 
-If needed, we can tell buildout that we *only* want to backup blobs or
-specifically do *not* want to backup the blobs.  Specifying this using
-the ``backup_blobs`` and ``only_blobs`` options might be useful in
-case you want to separate this into several scripts::
-
-    [buildout]
-    newest = false
-    parts = filebackup blobbackup
-
-    [filebackup]
-    recipe = collective.recipe.backup
-    backup_blobs = false
-
-    [blobbackup]
-    recipe = collective.recipe.backup
-    blob_storage = ${buildout:directory}/var/blobstorage
-    only_blobs = true
-
-With this setup ``bin/filebackup`` now only backs up the filestorage
-and ``bin/blobbackup`` only backs up the blobstorage.
-
-New in version 4.0 is the ``blob_timestamps`` option.
-Then we create stable directories that we do not rotate.
-For example: ``blobstorage.1972-12-25-01-02-03`` instead of ``blobstorage.0``.
-Since version 4.2.0 the default is true.
-Since version 5.0.0 setting it to false is deprecated, and this option may be removed.
+With these files, ``plone-backup --env-file files.env backup`` only backs up the filestorage
+and ``plone-backup --env-file blobs.env backup`` only backs up the blobstorage.
 
 
 rsync
@@ -601,68 +528,76 @@ rsync
 
 By default we use ``rsync`` to create backups.  We create hard links
 with this tool, to save disk space and still have incremental backups.
-This probably requires a unixy (Linux, Mac OS X) operating system.
+This probably requires a unixy (Linux, macOS) operating system.
+
 It is based on this article by Mike Rubel:
 http://www.mikerubel.org/computers/rsync_snapshots/
 
 We have not tried this on Windows.  Reports are welcome, but best is
-probably to set the ``use_rsync = false`` option in the backup part.
+probably to set ``PLONE_BACKUP_USE_RSYNC=false``.
 Then we simply copy the blobstorage directory.
 
 
 Alternative restore source
 --------------------------
 
-Changed in version 5: only one source is supported.
-
 You can restore from an alternative source.  Use case: first make a
 backup of your production site, then go to the testing or staging
 server and restore the production data there.
 
-In the ``alternative_restore_source`` option you can define different
-filestorage and blobstorage backup source directories using this
-syntax::
+In the ``alternative_restore_source`` option you can define the
+filestorage and blobstorage backup source directories using this syntax::
 
-    alternative_restore_source =
-        storagename datafs1_backup [blobdir1_backup]
+    PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data datafs_backup [blobdir_backup]
 
-The storagename must be ``Data`` (or ``1``) for the standard ``Data.fs``
-and optionally its blobstorage.
+The first word must be ``Data`` (or ``1``) for the standard ``Data.fs``.
+This enables the ``altrestore`` command.  For example::
 
-The result is a ``bin/altrestore`` script.
+    PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data /path/to/production/var/backups /path/to/production/var/blobstoragebackups
 
-This will work for a standard buildout with a single filestorage and
-blobstorage::
-
-    [backup]
-    recipe = collective.recipe.backup
-    alternative_restore_source =
-        Data /path/to/production/var/backups /path/to/production/var/blobstoragebackups
-
-The above configuration uses ``repozo`` to restore the Data.fs from
+This uses ``repozo`` to restore the Data.fs from
 the ``/path/to/production/var/backups`` repository to the standard
 ``var/filestorage/Data.fs`` location.  It copies the most recent
-blobstorage backup from
-``/path/to/production/var/blobstoragebackups/`` to the standard
-``var/blobstorage`` location.
+blobstorage backup from ``/path/to/production/var/blobstoragebackups/``
+to the standard ``var/blobstorage`` location.
 
-Calling the script with a specific date is supported just like the
-normal restore script::
+Calling it with a specific date is supported just like the normal restore::
 
-    bin/altrestore 2000-12-31-23-59
+    plone-backup altrestore 2000-12-31-23-59
 
-The recipe will fail if the alternative source does not match the
-standard filestorage and blobstorage.  For
-example, you get an error when the ``alternative_restore_source`` is
-missing the ``Data`` key, when it has an extra key, when a
-key has no paths, when a key has an extra or missing blobstorage.
 
-During install of the recipe, so during the ``bin/buildout`` run, it
-does not check if the sources exist: you might have the production
-backups on a different server and need to setup a remote shared
-directory, or you copy the data over manually.
+Migrating from collective.recipe.backup
+---------------------------------------
 
-Note that the script takes the ``archive_blob`` and ``use_rsync`` options
-into account.  So if the alternative restore source contains a blob
-backup that was made with ``archive_blob = true``, you need an
-``altrestore`` script that also uses this setting.
+The options are the same, with these differences:
+
+- Options are environment variables: ``keep = 3`` becomes ``PLONE_BACKUP_KEEP=3``.
+- The name of the buildout part is the ``name`` option.
+- We do not look in other buildout parts for the location of the filestorage
+  and blobstorage.  Set ``var_dir``, or ``datafs`` and ``blob_storage``.
+- ``blob_storage`` defaults to ``blobstorage`` in the ``var_dir``.
+- ``blob-storage`` and ``alternative_restore_sources`` are no longer supported:
+  use ``blob_storage`` and ``alternative_restore_source``.
+- Paths can not use ``${buildout:directory}``.  Use relative paths, or
+  environment variables, for example ``$PWD/backups``.
+- Multi-line values like several ``pre_command`` lines: use ``&&``.
+- Instead of a part with ``z3c.recipe.usercrontab``, use the Docker image
+  or your own crontab.
+
+
+Development
+-----------
+
+- Code repository: https://github.com/plone/plone.backup
+
+- Issue tracker: https://github.com/plone/plone.backup/issues
+
+- The history before version 1.0 is the history of ``collective.recipe.backup``:
+  https://github.com/collective/collective.recipe.backup
+
+- Run the tests with ``tox``, or with ``pytest`` after
+  ``pip install -e '.[test]'``.
+  The tests in ``src/plone/backup/tests/*.rst`` are good reading if you
+  are wondering about the effect some options have.
+
+- Questions and comments to https://community.plone.org.

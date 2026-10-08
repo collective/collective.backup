@@ -20,97 +20,82 @@ Create directories and content::
 
 Create some archived and not-archived separate backup scripts::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
     ... # keep is ignored by the zipbackup script
-    ... keep = 42
-    ... enable_zipbackup = true
+    ... PLONE_BACKUP_KEEP=42
+    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
     ... """)
-    >>> print(system(buildout))
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/zipbackup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/ziprestore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/zipbackup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/ziprestore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
 
 Now we test it::
 
     >>> print(system('bin/zipbackup'))
-    INFO: Created /sample-buildout/var/zipbackups
-    INFO: Created /sample-buildout/var/blobstoragezips
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/zipbackups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragezips
-    INFO: tar cf /sample-buildout/var/blobstoragezips/blobstorage.0.tar  -C /sample-buildout/var/blobstorage .
+    INFO: Created /sample-project/var/zipbackups
+    INFO: Created /sample-project/var/blobstoragezips
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/zipbackups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragezips
+    INFO: tar cf /sample-project/var/blobstoragezips/blobstorage.0.tar  -C /sample-project/var/blobstorage .
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/zipbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/zipbackups -F --gzip
 
 Keep is ignored by zipbackup, always using 1 as value::
 
     >>> print(system('bin/zipbackup'))
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/zipbackups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragezips
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/zipbackups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragezips
     INFO: Renaming blobstorage.0.tar to blobstorage.1.tar.
-    INFO: tar cf /sample-buildout/var/blobstoragezips/blobstorage.0.tar  -C /sample-buildout/var/blobstorage .
+    INFO: tar cf /sample-project/var/blobstoragezips/blobstorage.0.tar  -C /sample-project/var/blobstorage .
     INFO: Removed 1 full blob backup, with 1 file. The latest 1 backup has been kept.
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/zipbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/zipbackups -F --gzip
 
 Now test the ziprestore script::
 
     >>> print(system('bin/ziprestore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Created directory /sample-buildout/var/filestorage
-    INFO: Please wait while restoring database file: /sample-buildout/var/zipbackups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragezips to /sample-buildout/var/blobstorage
-    INFO: Removing /sample-buildout/var/blobstorage
-    INFO: Extracting /sample-buildout/var/blobstoragezips/blobstorage.0.tar to /sample-buildout/var/blobstorage
-    INFO: tar xf /sample-buildout/var/blobstoragezips/blobstorage.0.tar  -C /sample-buildout/var/blobstorage
+    INFO: Created directory /sample-project/var/filestorage
+    INFO: Please wait while restoring database file: /sample-project/var/zipbackups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragezips to /sample-project/var/blobstorage
+    INFO: Removing /sample-project/var/blobstorage
+    INFO: Extracting /sample-project/var/blobstoragezips/blobstorage.0.tar to /sample-project/var/blobstorage
+    INFO: tar xf /sample-project/var/blobstoragezips/blobstorage.0.tar  -C /sample-project/var/blobstorage
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/zipbackups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/zipbackups
 
 You can choose not to enable the zip scripts::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... keep = 42
-    ... enable_zipbackup = false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_KEEP=42
+    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=false
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    Removed script '/sample-project/bin/zipbackup'.
+    Removed script '/sample-project/bin/ziprestore'.
     >>> ls('bin')
     -  backup
-    -  buildout
     -  repozo
     -  restore
     -  snapshotbackup
@@ -119,27 +104,18 @@ You can choose not to enable the zip scripts::
 Or you simply do not list the enable_zipbackup option, falling back to
 the default::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... keep = 42
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_KEEP=42
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     >>> ls('bin')
     -  backup
-    -  buildout
     -  repozo
     -  restore
     -  snapshotbackup
@@ -148,20 +124,10 @@ the default::
 If backup_blobs is false, it is useless to enable the zipbackup, so we
 refuse this combination::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... backup_blobs = false
-    ... enable_zipbackup = true
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
     ... """)
-    >>> print(system(buildout))
-    While:
-      Installing.
-      Getting section backup.
-      Initializing section backup.
+    >>> print(system(generate))
     Error: Cannot have backup_blobs false and enable_zipbackup true. zipbackup is useless without blobs.

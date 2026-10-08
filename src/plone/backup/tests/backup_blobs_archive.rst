@@ -5,8 +5,8 @@ Test the copyblobs.backup_blobs_archive function
 
 Import stuff.
 
-    >>> from collective.recipe.backup.copyblobs import backup_blobs_archive
-    >>> from collective.recipe.backup.copyblobs import restore_blobs_archive
+    >>> from plone.backup.copyblobs import backup_blobs_archive
+    >>> from plone.backup.copyblobs import restore_blobs_archive
     >>> import time
 
 Prepare some blobs.
@@ -55,7 +55,7 @@ Use timestamps with a fs_backup_location.
     l  latest
     >>> import os
     >>> print(os.path.realpath('backups/latest'))
-    /sample-buildout/backups/blobs.2017-05-24-11-54-39.tar.gz
+    /sample-project/backups/blobs.2017-05-24-11-54-39.tar.gz
 
 And again with the same settings, as I saw something go wrong once.
 
@@ -95,7 +95,7 @@ Same settings, now with a change and a newer filestorage backup.
     -  blobs.2017-05-25-12-00-00.tar
     l  latest
     >>> print(os.path.realpath('backups/latest'))
-    /sample-buildout/backups/blobs.2017-05-25-12-00-00.tar
+    /sample-project/backups/blobs.2017-05-25-12-00-00.tar
 
 Now with incremental_blobs, which requires timestamps to be True.
 

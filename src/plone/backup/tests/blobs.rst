@@ -9,68 +9,38 @@ At first, ``blob_timestamps = false`` was the default.
 Since version 4.2 the default is True.
 We might make timestamps the only supported way in the future.
 
+By default we backup the blobs in ``var/blobstorage``.
+You can turn this off::
+
     >>> mkdir('var', 'filestorage')
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
     ... """)
-    >>> print(system(buildout))
-    Installing backup.
-    While:
-      Installing backup.
-    Error: No blob_storage found. You must specify one. To ignore this, set 'backup_blobs = false' in the [backup] section.
-    >>> write('buildout.cfg',
-    ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... backup_blobs = false
-    ... """)
-    >>> print(system(buildout))
-    Installing backup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
 
 Full cycle tests:
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... keep = 3
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_KEEP=3
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
     >>> ls('bin')
     -  backup
-    -  buildout
     -  repozo
     -  restore
     -  snapshotbackup
@@ -81,14 +51,14 @@ Full cycle tests:
 Test the snapshotbackup first, as that should be easiest.
 
     >>> print(system('bin/snapshotbackup'))
-    INFO: Created /sample-buildout/var/snapshotbackups
-    INFO: Created /sample-buildout/var/blobstoragesnapshots
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.0
+    INFO: Created /sample-project/var/snapshotbackups
+    INFO: Created /sample-project/var/blobstoragesnapshots
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var/blobstoragesnapshots')
     d  blobstorage.0
     >>> ls('var/blobstoragesnapshots/blobstorage.0')
@@ -101,13 +71,13 @@ easily test restoring to a specific time later.
     >>> time.sleep(2)
     >>> write('var', 'blobstorage', 'blob2.txt', 'Sample blob 2.')
     >>> print(system('bin/snapshotbackup'))
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
     INFO: Renaming blobstorage.0 to blobstorage.1.
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.0
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var/blobstoragesnapshots')
     d  blobstorage.0
     d  blobstorage.1
@@ -128,14 +98,14 @@ Now remove an item:
     >>> time.sleep(2)
     >>> remove('var', 'blobstorage', 'blob2.txt')
     >>> print(system('bin/snapshotbackup'))
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
     INFO: Renaming blobstorage.1 to blobstorage.2.
     INFO: Renaming blobstorage.0 to blobstorage.1.
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.0
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var/blobstoragesnapshots')
     d  blobstorage.0
     d  blobstorage.1
@@ -151,14 +121,14 @@ Now remove an item:
 Let's see how a bin/backup goes:
 
     >>> print(system('bin/backup'))
-    INFO: Created /sample-buildout/var/backups
-    INFO: Created /sample-buildout/var/blobstoragebackups
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.0
+    INFO: Created /sample-project/var/backups
+    INFO: Created /sample-project/var/blobstoragebackups
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip
     >>> ls('var/blobstoragebackups')
     d  blobstorage.0
     >>> ls('var/blobstoragebackups/blobstorage.0')
@@ -171,13 +141,13 @@ We try again with an extra 'blob':
     >>> time.sleep(2)
     >>> write('var', 'blobstorage', 'blob2.txt', 'Sample blob 2.')
     >>> print(system('bin/backup'))
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
     INFO: Renaming blobstorage.0 to blobstorage.1.
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.0
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1 /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip
     >>> ls('var/blobstoragebackups')
     d  blobstorage.0
     d  blobstorage.1
@@ -210,25 +180,25 @@ Now try a restore::
     >>> print(system('bin/restore', input='no\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Not restoring.
     <BLANKLINE>
     >>> print(system('bin/restore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups
     >>> ls('var/blobstorage')
     -  blob1.txt
     -  blob2.txt
@@ -237,12 +207,12 @@ With the ``no-prompt`` option we avoid the question::
 
     >>> print(system('bin/restore --no-prompt'))
     <BLANKLINE>
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups
     >>> ls('var/blobstorage')
     -  blob1.txt
     -  blob2.txt
@@ -264,17 +234,17 @@ tests due to rounding or similar sillyness.
     >>> print(system('bin/restore %s' % time_string, input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Date restriction: restoring state at ...
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.1/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.1/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups -D ...
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups -D ...
 
 The second blob file is now no longer in the blob storage.
 
@@ -286,9 +256,9 @@ When passed a date for which we have no backups, the script will fail.
     >>> print(system('bin/restore 1972-12-25', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Date restriction: restoring state at 1972-12-25.
     ERROR: Could not find backup of '1972-12-25' or earlier.
@@ -301,16 +271,16 @@ The snapshotrestore works too::
     >>> print(system('bin/snapshotrestore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/snapshotbackups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragesnapshots/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/snapshotbackups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragesnapshots/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups
 
 Check that this fits what is in the most recent snapshot::
 
@@ -341,17 +311,17 @@ Since release 2.3 we can also restore blob snapshots to a specific date/time.
     >>> print(system('bin/snapshotrestore %s' % time_string, input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Date restriction: restoring state at ...
-    INFO: Please wait while restoring database file: /sample-buildout/var/snapshotbackups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragesnapshots/blobstorage.1/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/snapshotbackups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragesnapshots/blobstorage.1/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -D ...
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -D ...
 
 The second blob file was only in blobstorage snapshot number 1 when we
 started and now it is also in the main blobstorage again.
@@ -369,11 +339,11 @@ We test that with a special bin/repozo script that simply quits::
     >>> print(system('bin/snapshotrestore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/snapshotbackups to /sample-buildout/var/filestorage/Data.fs
+    INFO: Please wait while restoring database file: /sample-project/var/snapshotbackups to /sample-project/var/filestorage/Data.fs
     ERROR: Repozo command failed. See message above.
     ERROR: Halting execution due to error; not restoring blobs.
     <BLANKLINE>
@@ -387,48 +357,30 @@ Restore the original bin/repozo::
 We can tell buildout that we only want to backup blobs or specifically
 do not want to backup the blobs.
 
-When we explicitly set backup_blobs to true, we must have a
-blob_storage option, otherwise buildout quits::
+When we explicitly set backup_blobs to true, without blob_storage option,
+we use ``var/blobstorage``::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... backup_blobs = true
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BACKUP_BLOBS=true
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    While:
-      Installing backup.
-    Error: No blob_storage found. You must specify one. To ignore this, set 'backup_blobs = false' in the [backup] section.
-    <BLANKLINE>
+    >>> print(system(plone_backup + ' show'))
+    name = 'backup'
+    ...
+                 'blobdir': '/sample-project/var/blobstorage',
+    ...
 
 Combining blob_backup=false and only_blobs=true will not work::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... backup_blobs = false
-    ... only_blobs = true
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... PLONE_BACKUP_ONLY_BLOBS=true
     ... """)
-    >>> print(system(buildout))
-    While:
-      Installing.
-      Getting section backup.
-      Initializing section backup.
+    >>> print(system(generate))
     Error: Cannot have backup_blobs false and only_blobs true.
     <BLANKLINE>
 
@@ -436,73 +388,67 @@ Specifying backup_blobs and only_blobs might be useful in case you
 want to separate this into several scripts.  Let's specify
 enable_zipbackup too::
 
-    >>> write('buildout.cfg',
+    >>> write('file.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = filebackup blobbackup
-    ...
-    ... [filebackup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... backup_blobs = false
-    ...
-    ... [blobbackup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... only_blobs = true
-    ... enable_zipbackup = true
+    ... PLONE_BACKUP_NAME=filebackup
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_BACKUP_BLOBS=false
     ... """)
-    >>> print(system(buildout))
-    Installing filebackup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/filebackup'.
-    Generated script '/sample-buildout/bin/filebackup-snapshot'.
-    Generated script '/sample-buildout/bin/filebackup-restore'.
-    Generated script '/sample-buildout/bin/filebackup-snapshotrestore'.
-    Installing blobbackup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/blobbackup'.
-    Generated script '/sample-buildout/bin/blobbackup-zip'.
-    Generated script '/sample-buildout/bin/blobbackup-snapshot'.
-    Generated script '/sample-buildout/bin/blobbackup-restore'.
-    Generated script '/sample-buildout/bin/blobbackup-ziprestore'.
-    Generated script '/sample-buildout/bin/blobbackup-snapshotrestore'.
-    <BLANKLINE>
+    >>> write('blob.env',
+    ... """
+    ... PLONE_BACKUP_NAME=blobbackup
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_ONLY_BLOBS=true
+    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... """)
+    >>> print(system(plone_backup + ' -e file.env generate'))
+    Generated script '/sample-project/bin/filebackup'.
+    Generated script '/sample-project/bin/filebackup-snapshot'.
+    Generated script '/sample-project/bin/filebackup-restore'.
+    Generated script '/sample-project/bin/filebackup-snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    >>> print(system(plone_backup + ' -e blob.env generate'))
+    Generated script '/sample-project/bin/blobbackup'.
+    Generated script '/sample-project/bin/blobbackup-zip'.
+    Generated script '/sample-project/bin/blobbackup-snapshot'.
+    Generated script '/sample-project/bin/blobbackup-restore'.
+    Generated script '/sample-project/bin/blobbackup-ziprestore'.
+    Generated script '/sample-project/bin/blobbackup-snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
 
 Now we test it.  First the backup.  The filebackup now only backs up
 the filestorage::
 
     >>> print(system('bin/filebackup'))
-    INFO: Created /sample-buildout/var/filebackups
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/filebackups
+    INFO: Created /sample-project/var/filebackups
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/filebackups
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/filebackups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/filebackups --quick --gzip
 
 blobbackup only backs up the blobstorage::
 
     >>> print(system('bin/blobbackup'))
-    INFO: Created /sample-buildout/var/blobbackup-blobstorages
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobbackup-blobstorages
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobbackup-blobstorages/blobstorage.0
+    INFO: Created /sample-project/var/blobbackup-blobstorages
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobbackup-blobstorages
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobbackup-blobstorages/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
 
 Test the snapshots as well::
 
     >>> print(system('bin/filebackup-snapshot'))
-    INFO: Created /sample-buildout/var/filebackup-snapshots
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/filebackup-snapshots
+    INFO: Created /sample-project/var/filebackup-snapshots
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/filebackup-snapshots
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/filebackup-snapshots -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/filebackup-snapshots -F --gzip
     >>> print(system('bin/blobbackup-snapshot'))
-    INFO: Created /sample-buildout/var/blobbackup-blobstoragesnapshots
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobbackup-blobstoragesnapshots
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobbackup-blobstoragesnapshots/blobstorage.0
+    INFO: Created /sample-project/var/blobbackup-blobstoragesnapshots
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobbackup-blobstoragesnapshots
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobbackup-blobstoragesnapshots/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
 
@@ -511,36 +457,36 @@ Now test the restore::
     >>> print(system('bin/filebackup-restore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/filebackups to /sample-buildout/var/filestorage/Data.fs
+    INFO: Please wait while restoring database file: /sample-project/var/filebackups to /sample-project/var/filestorage/Data.fs
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/filebackups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/filebackups
     >>> print(system('bin/filebackup-snapshotrestore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/filebackup-snapshots to /sample-buildout/var/filestorage/Data.fs
+    INFO: Please wait while restoring database file: /sample-project/var/filebackup-snapshots to /sample-project/var/filestorage/Data.fs
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/filebackup-snapshots
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/filebackup-snapshots
     >>> print(system('bin/blobbackup-restore', input='yes\n'))
     <BLANKLINE>
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Restoring blobs from /sample-buildout/var/blobbackup-blobstorages to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobbackup-blobstorages/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Restoring blobs from /sample-project/var/blobbackup-blobstorages to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobbackup-blobstorages/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> print(system('bin/blobbackup-snapshotrestore', input='yes\n'))
     <BLANKLINE>
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Restoring blobs from /sample-buildout/var/blobbackup-blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobbackup-blobstoragesnapshots/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Restoring blobs from /sample-project/var/blobbackup-blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobbackup-blobstoragesnapshots/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
 
@@ -555,42 +501,41 @@ restore to ensure passing of extra options to rsync works::
     >>> import shutil
     >>> shutil.rmtree('var/blobstoragebackups/blobstorage.0')
     >>> shutil.rmtree('var/blobstoragebackups/blobstorage.1')
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... rsync_options = --no-l -k
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_RSYNC_OPTIONS=--no-l -k
     ... """)
-    >>> print(system(buildout))
-    Uninstalling blobbackup.
-    Uninstalling filebackup.
-    Installing backup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
     >>> ls('bin')
-    - backup
-    - buildout
-    - repozo
-    - restore
-    - snapshotbackup
-    - snapshotrestore
+    -  backup
+    -  blobbackup
+    -  blobbackup-restore
+    -  blobbackup-snapshot
+    -  blobbackup-snapshotrestore
+    -  blobbackup-zip
+    -  blobbackup-ziprestore
+    -  filebackup
+    -  filebackup-restore
+    -  filebackup-snapshot
+    -  filebackup-snapshotrestore
+    -  repozo
+    -  restore
+    -  snapshotbackup
+    -  snapshotrestore
     >>> print(system('bin/backup'))
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: rsync -a --no-l -k /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.0
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: rsync -a --no-l -k /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip
     >>> ls('var/blobstoragebackups')
     d  blobstorage.0
     >>> ls('var/blobstoragebackups/blobstorage.0')
@@ -606,47 +551,47 @@ So backup still works, now test restore that uses a symlinked directory as the b
     >>> remove('var','blobstorage','blob2.txt')
     >>> mkdir('var/test')
     >>> mkdir('var/test/blobstorage.0')
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... blobbackuplocation = ${buildout:directory}/var/test
-    ... rsync_options = --no-l -k
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_BLOBBACKUPLOCATION=test
+    ... PLONE_BACKUP_RSYNC_OPTIONS=--no-l -k
     ... # we use pre_ and post_commands to set/unset the symlink
     ... # using os.symlink instead causes rsync to fail for some reason
-    ... pre_command = ln -s ${buildout:directory}/var/blobstoragebackups/blobstorage.0/blobstorage ${backup:blobbackuplocation}/blobstorage.0/blobstorage
-    ... post_command = unlink ${backup:blobbackuplocation}/blobstorage.0/blobstorage
+    ... PLONE_BACKUP_PRE_COMMAND=ln -s $PWD/var/blobstoragebackups/blobstorage.0/blobstorage $PWD/var/test/blobstorage.0/blobstorage
+    ... PLONE_BACKUP_POST_COMMAND=unlink $PWD/var/test/blobstorage.0/blobstorage
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
     >>> ls('bin')
-    - backup
-    - buildout
-    - repozo
-    - restore
-    - snapshotbackup
-    - snapshotrestore
+    -  backup
+    -  blobbackup
+    -  blobbackup-restore
+    -  blobbackup-snapshot
+    -  blobbackup-snapshotrestore
+    -  blobbackup-zip
+    -  blobbackup-ziprestore
+    -  filebackup
+    -  filebackup-restore
+    -  filebackup-snapshot
+    -  filebackup-snapshotrestore
+    -  repozo
+    -  restore
+    -  snapshotbackup
+    -  snapshotrestore
     >>> print(system('bin/restore --no-prompt'))
     <BLANKLINE>
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/test to /sample-buildout/var/blobstorage
-    INFO: rsync -a --no-l -k --delete /sample-buildout/var/test/blobstorage.0/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/test to /sample-project/var/blobstorage
+    INFO: rsync -a --no-l -k --delete /sample-project/var/test/blobstorage.0/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups
     >>> ls('var/blobstorage')
     -  blob1.txt
     -  blob2.txt
@@ -654,31 +599,22 @@ So backup still works, now test restore that uses a symlinked directory as the b
 A blob_storage with a slash at the end can give unexpected results, creating a backup with name ``.0``.
 See issue #26. So test what happens:
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_timestamps = false
-    ... blob_storage = ${buildout:directory}/var/blobstorage/
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage/
     ... """)
-    >>> print(system(buildout))
-    Uninstalling backup.
-    Installing backup.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in version 6, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
-    <BLANKLINE>
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
     >>> print(system('bin/backup'))
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
     INFO: Renaming blobstorage.0 to blobstorage.1.
-    INFO: rsync -a --delete --link-dest=../blobstorage.1 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.0
+    INFO: rsync -a --delete --link-dest=../blobstorage.1 /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.0
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip

@@ -1,5 +1,5 @@
 """
-This module contains the tool of collective.recipe.backup
+This module contains the tool of plone.backup
 """
 
 from setuptools import setup

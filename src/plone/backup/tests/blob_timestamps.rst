@@ -13,31 +13,20 @@ Some imports:
 
 Write a buildout config::
 
-    >>> write('buildout.cfg',
+    >>> write('.env',
     ... """
-    ... [buildout]
-    ... # For some reason this is now needed:
-    ... index = https://pypi.python.org/simple
-    ... # Avoid suddenly updating zc.buildout or other packages:
-    ... newest = false
-    ... parts = backup
-    ...
-    ... [backup]
-    ... recipe = collective.recipe.backup
-    ... blob_storage = ${buildout:directory}/var/blobstorage
-    ... blob_timestamps = true
-    ... keep = 3
+    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... PLONE_BACKUP_BLOB_TIMESTAMPS=true
+    ... PLONE_BACKUP_KEEP=3
     ... """)
-    >>> print(system(buildout))
-    Installing backup.
-    Generated script '/sample-buildout/bin/backup'.
-    Generated script '/sample-buildout/bin/snapshotbackup'.
-    Generated script '/sample-buildout/bin/restore'.
-    Generated script '/sample-buildout/bin/snapshotrestore'.
+    >>> print(system(generate))
+    Generated script '/sample-project/bin/backup'.
+    Generated script '/sample-project/bin/snapshotbackup'.
+    Generated script '/sample-project/bin/restore'.
+    Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
     >>> ls('bin')
     -  backup
-    -  buildout
     -  repozo
     -  restore
     -  snapshotbackup
@@ -56,14 +45,14 @@ And it is easier to write the tests with a real date rather than 20...-...-...-.
 Test the snapshotbackup first, as that should be easiest.
 
     >>> print(system('bin/snapshotbackup'))
-    INFO: Created /sample-buildout/var/blobstoragesnapshots
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.1999-12-31-01-01-03
+    INFO: Created /sample-project/var/blobstoragesnapshots
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.1999-12-31-01-01-03
     INFO: Creating symlink from latest to blobstorage.1999-12-31-01-01-03
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var', 'blobstoragesnapshots')
     d  blobstorage.1999-12-31-01-01-03
     d  latest
@@ -81,13 +70,13 @@ We sleep a bit, because I sometimes get slightly different test results.
     >>> write('var', 'snapshotbackups', '1999-12-31-01-02-03.fsz', 'mock datafs backup')
     >>> write('var', 'blobstorage', 'blob2.txt', 'Sample blob 2.')
     >>> print(system('bin/snapshotbackup'))
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-01-01-03 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.1999-12-31-01-02-03
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-01-01-03 /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.1999-12-31-01-02-03
     INFO: Creating symlink from latest to blobstorage.1999-12-31-01-02-03
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var/blobstoragesnapshots')
     d  blobstorage.1999-12-31-01-01-03
     d  blobstorage.1999-12-31-01-02-03
@@ -114,13 +103,13 @@ But let's test it for good measure::
     >>> remove('var', 'blobstorage', 'blob2.txt')
     >>> write('var', 'blobstorage', 'blob1.txt', 'Sample blob 1 version 2.')
     >>> print(system('bin/snapshotbackup'))
-    INFO: Please wait while making snapshot backup: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/snapshotbackups
-    INFO: Please wait while making snapshot of blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragesnapshots
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-01-02-03 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragesnapshots/blobstorage.1999-12-31-01-03-03
+    INFO: Please wait while making snapshot backup: /sample-project/var/filestorage/Data.fs to /sample-project/var/snapshotbackups
+    INFO: Please wait while making snapshot of blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragesnapshots
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-01-02-03 /sample-project/var/blobstorage /sample-project/var/blobstoragesnapshots/blobstorage.1999-12-31-01-03-03
     INFO: Creating symlink from latest to blobstorage.1999-12-31-01-03-03
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -F --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -F --gzip
     >>> ls('var/blobstoragesnapshots')
     d  blobstorage.1999-12-31-01-01-03
     d  blobstorage.1999-12-31-01-02-03
@@ -156,14 +145,14 @@ Again mock some repozo backups with timestamps.
     >>> mkdir('var', 'backups')
     >>> write('var', 'backups', '1999-12-31-02-01-03.fsz', 'mock datafs backup')
     >>> print(system('bin/backup'))
-    INFO: Created /sample-buildout/var/blobstoragebackups
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: rsync -a  /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.1999-12-31-02-01-03
+    INFO: Created /sample-project/var/blobstoragebackups
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: rsync -a  /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.1999-12-31-02-01-03
     INFO: Creating symlink from latest to blobstorage.1999-12-31-02-01-03
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip
     >>> backup_timestamp0 = 'blobstorage.1999-12-31-02-01-03'
     >>> ls('var', 'blobstoragebackups')
     d  blobstorage.1999-12-31-02-01-03
@@ -180,13 +169,13 @@ We try again with an extra 'blob' and a changed 'blob', and a new filestorage ba
     >>> write('var', 'blobstorage', 'blob2.txt', 'Sample blob 2.')
     >>> write('var', 'blobstorage', 'blob1.txt', 'Sample blob 1 version 3.')
     >>> print(system('bin/backup'))
-    INFO: Please wait while backing up database file: /sample-buildout/var/filestorage/Data.fs to /sample-buildout/var/backups
-    INFO: Please wait while backing up blobs from /sample-buildout/var/blobstorage to /sample-buildout/var/blobstoragebackups
-    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-02-01-03 /sample-buildout/var/blobstorage /sample-buildout/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03
+    INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
+    INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups
+    INFO: rsync -a  --delete --link-dest=../blobstorage.1999-12-31-02-01-03 /sample-project/var/blobstorage /sample-project/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03
     INFO: Creating symlink from latest to blobstorage.1999-12-31-02-02-03
     <BLANKLINE>
     >>> check_repozo_output()
-    --backup -f /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups --quick --gzip
+    --backup -f /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups --quick --gzip
     >>> ls('var', 'blobstoragebackups')
     d  blobstorage.1999-12-31-02-01-03
     d  blobstorage.1999-12-31-02-02-03
@@ -216,9 +205,9 @@ The third file should be gone afterwards::
     >>> print(system('bin/restore', input='no\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Not restoring.
     <BLANKLINE>
@@ -229,16 +218,16 @@ The third file should be gone afterwards::
     >>> print(system('bin/restore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups
     >>> ls('var/blobstorage')
     -  blob1.txt
     -  blob2.txt
@@ -254,12 +243,12 @@ With the ``no-prompt`` option we avoid the question::
     -  blob3.txt
     >>> print(system('bin/restore --no-prompt'))
     <BLANKLINE>
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.1999-12-31-02-02-03/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups
     >>> ls('var/blobstorage')
     -  blob1.txt
     -  blob2.txt
@@ -276,17 +265,17 @@ Since we use timestamps, this should be fairly straight forward.
     >>> print(system('bin/restore 1999-12-31-02-01-03', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Date restriction: restoring state at ...
-    INFO: Please wait while restoring database file: /sample-buildout/var/backups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragebackups to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragebackups/blobstorage.1999-12-31-02-01-03/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/backups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragebackups to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragebackups/blobstorage.1999-12-31-02-01-03/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/backups -D ...
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/backups -D ...
 
 The second blob file is now no longer in the blob storage.
 
@@ -303,16 +292,16 @@ The snapshotrestore works too::
     >>> print(system('bin/snapshotrestore', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
-    INFO: Please wait while restoring database file: /sample-buildout/var/snapshotbackups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragesnapshots/blobstorage.1999-12-31-01-03-03/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/snapshotbackups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragesnapshots/blobstorage.1999-12-31-01-03-03/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups
 
 Check that this fits what is in the most recent snapshot::
 
@@ -350,17 +339,17 @@ Since we use timestamps, this should be fairly straight forward.
     >>> print(system('bin/snapshotrestore 1999-12-31-01-02-03', input='yes\n'))
     <BLANKLINE>
     This will replace the filestorage:
-        /sample-buildout/var/filestorage/Data.fs
+        /sample-project/var/filestorage/Data.fs
     This will replace the blobstorage:
-        /sample-buildout/var/blobstorage
+        /sample-project/var/blobstorage
     Are you sure? (yes/No)?
     INFO: Date restriction: restoring state at ...
-    INFO: Please wait while restoring database file: /sample-buildout/var/snapshotbackups to /sample-buildout/var/filestorage/Data.fs
-    INFO: Restoring blobs from /sample-buildout/var/blobstoragesnapshots to /sample-buildout/var/blobstorage
-    INFO: rsync -a  --delete /sample-buildout/var/blobstoragesnapshots/blobstorage.1999-12-31-01-02-03/blobstorage /sample-buildout/var
+    INFO: Please wait while restoring database file: /sample-project/var/snapshotbackups to /sample-project/var/filestorage/Data.fs
+    INFO: Restoring blobs from /sample-project/var/blobstoragesnapshots to /sample-project/var/blobstorage
+    INFO: rsync -a  --delete /sample-project/var/blobstoragesnapshots/blobstorage.1999-12-31-01-02-03/blobstorage /sample-project/var
     <BLANKLINE>
     >>> check_repozo_output()
-    --recover -o /sample-buildout/var/filestorage/Data.fs -r /sample-buildout/var/snapshotbackups -D 1999-12-31-01-02-03
+    --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/var/snapshotbackups -D 1999-12-31-01-02-03
 
 The second blob file was only in blobstorage snapshot number 1 when we
 started and now it is also in the main blobstorage again.

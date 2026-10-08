@@ -1,3 +1,4 @@
+import os
 import unittest
 
 
@@ -5,7 +6,7 @@ class UtilsTestCase(unittest.TestCase):
     """Test the code in utils.py."""
 
     def test_to_bool(self):
-        from collective.recipe.backup import to_bool
+        from plone.backup.utils import to_bool
 
         self.assertTrue(to_bool(True))
         self.assertFalse(to_bool(False))
@@ -25,7 +26,7 @@ class UtilsTestCase(unittest.TestCase):
         self.assertTrue(to_bool(42))
 
     def test_check_for_true(self):
-        from collective.recipe.backup import check_for_true
+        from plone.backup.scripts import check_for_true
 
         # check_for_true changes the input in place.
         self.assertEqual(check_for_true({}, []), None)
@@ -67,52 +68,145 @@ class UtilsTestCase(unittest.TestCase):
         check_for_true(options, options.keys())
         self.assertEqual(options, sanitised_options)
 
-    def test_get_zope_option(self):
-        from collective.recipe.backup import get_zope_option
 
-        # The buildout dictionary we pass, is quite specific.
-        buildout_info = {
-            "buildout": {"parts": "one two four"},
-            "one": {
-                "recipe": "unknown.recipe",
-                "wanted": "one-wanted",
-                "one-only": "one-only-value",
+class EnvTestCase(unittest.TestCase):
+    """Test reading the options from environment variables."""
+
+    def setUp(self):
+        import tempfile
+
+        self.orig_dir = os.getcwd()
+        self.tmp_dir = os.path.realpath(tempfile.mkdtemp())
+        os.chdir(self.tmp_dir)
+
+    def tearDown(self):
+        import shutil
+
+        os.chdir(self.orig_dir)
+        shutil.rmtree(self.tmp_dir)
+
+    def write(self, name, text):
+        with open(name, "w") as myfile:
+            myfile.write(text)
+
+    def test_read_env_file(self):
+        from plone.backup.scripts import read_env_file
+
+        self.write(
+            "test.env",
+            "# comment\n"
+            "\n"
+            "PLONE_BACKUP_KEEP=3\n"
+            "export PLONE_BACKUP_FULL = true\n"
+            "PLONE_BACKUP_PRE_COMMAND='echo \"hi\" > pre'\n"
+            'PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE="1 a\\nData b"\n'
+            "OTHER=x=y\n",
+        )
+        self.assertEqual(
+            read_env_file("test.env"),
+            {
+                "PLONE_BACKUP_KEEP": "3",
+                "PLONE_BACKUP_FULL": "true",
+                "PLONE_BACKUP_PRE_COMMAND": 'echo "hi" > pre',
+                "PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE": "1 a\nData b",
+                "OTHER": "x=y",
             },
-            "two": {
-                "recipe": "plone.recipe.zeoserver",
-                "wanted": "two-wanted",
-                "two-only": "two-only-value",
-            },
-            "three": {
-                "recipe": "plone.recipe.zeoserver",
-                "wanted": "three-wanted",
-                "three-only": "three-only-value",
-            },
-            "four": {
-                "recipe": "plone.recipe.zope2INSTANCE",
-                "wanted": "four-wanted",
-                "four-only": "four-only-value",
-            },
-        }
-        # Non existing keys are not found:
-        self.assertFalse(get_zope_option(buildout_info, "foo"))
-        # Only keys from one of the correct recipes are found:
-        self.assertFalse(get_zope_option(buildout_info, "one-only"))
-        self.assertEqual(get_zope_option(buildout_info, "wanted"), "two-wanted")
-        # Keys from a non active part are not found:
-        self.assertFalse(get_zope_option(buildout_info, "three-only"))
-        # We accept recipes with mixed case:
-        self.assertEqual(get_zope_option(buildout_info, "four-only"), "four-only-value")
-        # The order of parts is important:
-        buildout_info["buildout"] = {"parts": "four two one"}
-        self.assertEqual(get_zope_option(buildout_info, "wanted"), "four-wanted")
+        )
+
+    def test_read_env_file_error(self):
+        from plone.backup.scripts import ConfigError
+        from plone.backup.scripts import read_env_file
+
+        self.write("test.env", "PLONE_BACKUP_KEEP\n")
+        with self.assertRaises(ConfigError):
+            read_env_file("test.env")
+
+    def test_load_part_defaults(self):
+        from plone.backup.scripts import load_part
+
+        part = load_part(environ={})
+        self.assertEqual(part.name, "backup")
+        args = part.arguments
+        self.assertEqual(args["keep"], 2)
+        self.assertEqual(args["keep_blob_days"], 14)
+        self.assertTrue(args["backup_blobs"])
+        storage = args["storage"]
+        self.assertEqual(
+            storage["datafs"],
+            os.path.join(self.tmp_dir, "var", "filestorage", "Data.fs"),
+        )
+        self.assertEqual(
+            storage["blobdir"], os.path.join(self.tmp_dir, "var", "blobstorage")
+        )
+        self.assertEqual(
+            storage["backup_location"], os.path.join(self.tmp_dir, "var", "backups")
+        )
+        self.assertEqual(
+            sorted(part.commands()),
+            ["backup", "restore", "snapshotbackup", "snapshotrestore"],
+        )
+
+    def test_load_part_env_wins_over_env_file(self):
+        from plone.backup.scripts import load_part
+
+        self.write(".env", "PLONE_BACKUP_KEEP=3\nPLONE_BACKUP_FULL=true\n")
+        self.write("other.env", "PLONE_BACKUP_KEEP=4\n")
+        part = load_part(environ={"PLONE_BACKUP_KEEP": "5"})
+        self.assertEqual(part.arguments["keep"], 5)
+        self.assertTrue(part.arguments["full"])
+        part = load_part(environ={})
+        self.assertEqual(part.arguments["keep"], 3)
+        # An explicit env file means we do not read .env.
+        part = load_part(env_file="other.env", environ={})
+        self.assertEqual(part.arguments["keep"], 4)
+        self.assertFalse(part.arguments["full"])
+
+    def test_load_part_var_dir_and_name(self):
+        from plone.backup.scripts import load_part
+
+        part = load_part(
+            environ={
+                "PLONE_BACKUP_NAME": "plonebackup",
+                "PLONE_BACKUP_VAR_DIR": "instance/var",
+                "PLONE_BACKUP_BASE_DIR": "/srv/project",
+                "PLONE_BACKUP_CRON": "@daily",
+            }
+        )
+        storage = part.arguments["storage"]
+        self.assertEqual(
+            storage["datafs"], "/srv/project/instance/var/filestorage/Data.fs"
+        )
+        self.assertEqual(storage["blobdir"], "/srv/project/instance/var/blobstorage")
+        self.assertEqual(
+            storage["snapshot_location"],
+            "/srv/project/instance/var/plonebackup-snapshots",
+        )
+        self.assertEqual(part.commands()["snapshotbackup"], "plonebackup-snapshot")
+
+    def test_load_part_unknown_and_wrong(self):
+        from plone.backup.scripts import ConfigError
+        from plone.backup.scripts import load_part
+
+        with self.assertLogs("backup", level="WARNING") as logs:
+            load_part(environ={"PLONE_BACKUP_KEPE": "3"})
+        self.assertIn("PLONE_BACKUP_KEPE", logs.output[0])
+        with self.assertRaises(ConfigError):
+            load_part(environ={"PLONE_BACKUP_KEEP": "many"})
+        with self.assertRaises(ConfigError):
+            load_part(environ={"PLONE_BACKUP_ENV_FILE": "x"}, env_file="missing.env")
+
+    def test_crontab(self):
+        from plone.backup.cli import crontab
+
+        self.write(".env", "PLONE_BACKUP_SNAPSHOT_CRON=@weekly\n")
+        self.assertTrue(crontab().endswith(" snapshotbackup\n"))
 
 
 class CopyBlobsTestCase(unittest.TestCase):
     """Test the code in copyblobs.py."""
 
     def test_gen_timestamp(self):
-        from collective.recipe.backup.copyblobs import gen_timestamp
+        from plone.backup.copyblobs import gen_timestamp
 
         self.assertTrue(gen_timestamp().startswith("20"))
         self.assertEqual(gen_timestamp().count("-"), 5)
@@ -126,8 +220,8 @@ class CopyBlobsTestCase(unittest.TestCase):
         self.assertEqual(gen_timestamp(now=1487874793.90436), "2017-02-23-18-33-13")
 
     def test_is_time_stamp(self):
-        from collective.recipe.backup.copyblobs import gen_timestamp
-        from collective.recipe.backup.copyblobs import is_time_stamp
+        from plone.backup.copyblobs import gen_timestamp
+        from plone.backup.copyblobs import is_time_stamp
 
         self.assertTrue(is_time_stamp("1999-12-31-23-59-30"))
         self.assertFalse(is_time_stamp("1999-1-31-23-59-30"))
@@ -137,7 +231,7 @@ class CopyBlobsTestCase(unittest.TestCase):
         self.assertTrue(is_time_stamp(gen_timestamp()))
 
     def test_get_prefix_and_number(self):
-        from collective.recipe.backup.copyblobs import get_prefix_and_number as gpn
+        from plone.backup.copyblobs import get_prefix_and_number as gpn
 
         self.assertEqual(gpn("1"), ("", "1"))
         self.assertEqual(gpn("1999-12-31-23-59-30"), ("", "1999-12-31-23-59-30"))
@@ -172,7 +266,7 @@ class CopyBlobsTestCase(unittest.TestCase):
         )
 
     def test_number_key(self):
-        from collective.recipe.backup.copyblobs import number_key
+        from plone.backup.copyblobs import number_key
 
         self.assertGreater(number_key("0"), number_key("1"))
         self.assertEqual(number_key("0"), number_key("0"))
@@ -227,9 +321,9 @@ class CopyBlobsTestCase(unittest.TestCase):
         )
 
     def test_first_number_key(self):
-        from collective.recipe.backup.copyblobs import first_number_key
-        from collective.recipe.backup.copyblobs import is_snar
-        from collective.recipe.backup.copyblobs import mod_time_number_key
+        from plone.backup.copyblobs import first_number_key
+        from plone.backup.copyblobs import is_snar
+        from plone.backup.copyblobs import mod_time_number_key
 
         # Values should be (number, modification time, ignored extra).
         # Number is either a number or a timestamp.
@@ -384,7 +478,7 @@ class CopyBlobsTestCase(unittest.TestCase):
         )
 
     def test_backup_key(self):
-        from collective.recipe.backup.copyblobs import backup_key
+        from plone.backup.copyblobs import backup_key
 
         self.assertGreater(backup_key("foo.0"), backup_key("foo.1"))
         self.assertEqual(backup_key("foo.0"), backup_key("foo.0"))
@@ -419,7 +513,7 @@ class CopyBlobsTestCase(unittest.TestCase):
         )
 
     def test_archive_backup_key(self):
-        from collective.recipe.backup.copyblobs import archive_backup_key
+        from plone.backup.copyblobs import archive_backup_key
 
         self.assertGreater(
             archive_backup_key("foo.0.tar.gz"), archive_backup_key("foo.1.tar.gz")
@@ -481,7 +575,7 @@ class CopyBlobsTestCase(unittest.TestCase):
         )
 
     def test_combine_backups(self):
-        from collective.recipe.backup.copyblobs import combine_backups as cb
+        from plone.backup.copyblobs import combine_backups as cb
 
         self.assertEqual(cb([]), [])
         # The list should have lists/tuples of (num, mod_time, path).

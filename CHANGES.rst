@@ -7,6 +7,8 @@
 
 .. towncrier release notes start
 
+The changes below are from ``collective.recipe.backup``, which was renamed to ``plone.backup``.
+
 6.0.0 (2026-05-19)
 ------------------
 

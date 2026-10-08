@@ -11,7 +11,7 @@ Some imports:
 
     >>> import os
 
-Write a buildout config::
+Write a configuration::
 
     >>> write('.env',
     ... """

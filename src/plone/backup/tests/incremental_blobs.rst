@@ -11,7 +11,7 @@ Some imports:
 
     >>> import os
 
-Write a buildout config.
+Write a configuration.
 We start with a wrong one, which explicitly sets blob_timestamps to false::
 
     >>> write('.env',

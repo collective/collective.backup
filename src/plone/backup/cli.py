@@ -62,7 +62,7 @@ def main(argv=None):
         subparser = subparsers.add_parser(command, help=description)
         scripts.add_script_arguments(subparser, command)
     args = parser.parse_args(argv)
-    # Show warnings while computing the options, like buildout did.
+    # Show warnings while computing the options.
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
 
     try:

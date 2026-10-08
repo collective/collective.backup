@@ -10,7 +10,7 @@ Import stuff.
 
     >>> from plone.backup.copyblobs import cleanup
 
-For the test, we create a backup dir using buildout's test support methods:
+For the test, we create a backup dir using the test helper methods:
 
     >>> backup_dir = 'back'
     >>> mkdir(backup_dir)

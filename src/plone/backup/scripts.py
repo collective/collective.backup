@@ -1,9 +1,6 @@
 """Compute the backup options and generate the backup scripts.
 
-This is the standalone replacement of the zc.buildout recipe of
-collective.recipe.backup.  The options have the same names and defaults
-as the options of the recipe.  They are read from, in increasing order of
-importance:
+The options are read from, in increasing order of importance:
 
 - the ``[tool.plone-backup]`` table in ``pyproject.toml``,
 - a ``.env`` file,
@@ -84,7 +81,7 @@ KNOWN_OPTIONS = set(BOOLEAN_OPTIONS + LOCATION_OPTIONS) | {
     "var_dir",
 }
 
-# Command name (script name for a part named 'backup') and the function
+# Command name (script name when the name is 'backup') and the function
 # in plone.backup.main that it calls.
 COMMANDS = {
     "backup": "backup_main",
@@ -113,8 +110,8 @@ class ConfigError(Exception):
 def script_names(name):
     """Return the script names for a part with this name.
 
-    A part named 'backup' gets the standard names.  Other parts get
-    their name as prefix.
+    The name 'backup' gets the standard names.  Other names are used
+    as prefix.
 
     >>> script_names('backup')['snapshotbackup']
     'snapshotbackup'
@@ -398,8 +395,7 @@ class Part:
             logger.warning(
                 "You have disabled blob_timestamps. "
                 "Support for this may be dropped in a future version, "
-                "making it impossible to restore backups without timestamps. "
-                "See https://github.com/collective/collective.recipe.backup/issues/65"
+                "making it impossible to restore backups without timestamps."
             )
 
         # More locations.
@@ -438,8 +434,7 @@ class Part:
         blob_snapshot_location,
         blob_zip_location,
     ):
-        # Note: we used to support additional storages,
-        # but that was dropped in collective.recipe.backup 5.
+        # We support one filestorage: the standard Data.fs.
         datafs = construct_path(self.base_dir, self.options["datafs"])
 
         # '1' is the default root storagename for Zope.
@@ -464,8 +459,7 @@ class Part:
         """Compute alternative restore source.
 
         Return them in the storage.
-        Support for multiple sources for additional storages was dropped
-        in collective.recipe.backup 5.
+        Only one source is supported: for the standard Data.fs.
         """
         alt_sources = self.options["alternative_restore_source"]
         if not alt_sources:
@@ -580,8 +574,7 @@ class Part:
     def check_folders(self):
         """Check that we can create the backup folders.
 
-        Like the buildout recipe did when installing, we try to create
-        the folders, but remove them again.
+        We try to create the folders, but remove them again.
         """
         storage = self.storage
         if not to_bool(self.options["only_blobs"]):
@@ -682,7 +675,7 @@ def generate(part, bin_dir=None):
     dest = bin_dir or part.bin_dir
     if not os.path.isdir(dest):
         os.makedirs(dest)
-    source = f"part {part.name} in {part.base_dir}"
+    source = f"{part.name} in {part.base_dir}"
     arguments = pprint.pformat(part.arguments)
     generated = []
     for command, script_name in part.commands().items():

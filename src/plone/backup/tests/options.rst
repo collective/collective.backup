@@ -3,8 +3,6 @@
 Supported options
 =================
 
-Just to isolate some test differences, we run an empty buildout once::
-
 We'll use most options, except the blob options for now::
 
     >>> write('.env',
@@ -27,7 +25,7 @@ We'll use most options, except the blob options for now::
     Generated script '/sample-project/bin/snapshotrestore'.
     <BLANKLINE>
 
-Backups are now stored in the ``/myproject`` folder inside buildout
+Backups are now stored in the ``myproject`` folder inside the project
 and the Data.fs location is handled correctly despite not being an
 absolute path.  Note that the order in which the lines show up here in
 the tests may be different from how they appear in reality.  This is
@@ -118,23 +116,13 @@ In our case the ``--backup ...`` lines above are just the mock repozo script
 that still prints something. So it proves that the command is executed, but it
 won't end up in the output.
 
-Speaking of cron jobs?  Take a look at `zc.recipe.usercrontab
-<http://pypi.python.org/pypi/z3c.recipe.usercrontab>`_ if you want to handle
-cronjobs from within your buildout.  For example::
-
-    [backupcronjob]
-    recipe = z3c.recipe.usercrontab
-    times = 0 12 * * *
-    command = ${buildout:directory}/bin/backup
-
 
 Disable the snapshotrestore script
 ----------------------------------
 
-We generate a new buildout
+We generate the scripts again
 with enable_snapshotrestore set to false. The script should not be
-generated now (and buildout will actually remove the previously
-generated script).
+generated now, and we remove the previously generated script.
 
     >>> write('.env',
     ... """

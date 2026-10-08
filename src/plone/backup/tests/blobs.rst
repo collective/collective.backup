@@ -5,8 +5,7 @@ Blob storage
 
 For tests with ``blob_timestamps = true``, see ``blob_timestamps.rst``.
 That started as a copy of the current ``blobs.rst`` file.
-At first, ``blob_timestamps = false`` was the default.
-Since version 4.2 the default is True.
+The default of ``blob_timestamps`` is true.
 We might make timestamps the only supported way in the future.
 
 By default we backup the blobs in ``var/blobstorage``.
@@ -23,7 +22,7 @@ You can turn this off::
     Generated script '/sample-project/bin/snapshotbackup'.
     Generated script '/sample-project/bin/restore'.
     Generated script '/sample-project/bin/snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
 
 Full cycle tests:
 
@@ -38,7 +37,7 @@ Full cycle tests:
     Generated script '/sample-project/bin/snapshotbackup'.
     Generated script '/sample-project/bin/restore'.
     Generated script '/sample-project/bin/snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
     >>> ls('bin')
     -  backup
     -  repozo
@@ -354,7 +353,7 @@ Restore the original bin/repozo::
     >>> write('bin', 'repozo', REPOZO_SCRIPT_TEXT)
     >>> dontcare = system('chmod u+x bin/repozo')
 
-We can tell buildout that we only want to backup blobs or specifically
+We can say that we only want to backup blobs or specifically
 do not want to backup the blobs.
 
 When we explicitly set backup_blobs to true, without blob_storage option,
@@ -408,7 +407,7 @@ enable_zipbackup too::
     Generated script '/sample-project/bin/filebackup-snapshot'.
     Generated script '/sample-project/bin/filebackup-restore'.
     Generated script '/sample-project/bin/filebackup-snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
     >>> print(system(plone_backup + ' -e blob.env generate'))
     Generated script '/sample-project/bin/blobbackup'.
     Generated script '/sample-project/bin/blobbackup-zip'.
@@ -416,7 +415,7 @@ enable_zipbackup too::
     Generated script '/sample-project/bin/blobbackup-restore'.
     Generated script '/sample-project/bin/blobbackup-ziprestore'.
     Generated script '/sample-project/bin/blobbackup-snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
 
 Now we test it.  First the backup.  The filebackup now only backs up
 the filestorage::
@@ -512,7 +511,7 @@ restore to ensure passing of extra options to rsync works::
     Generated script '/sample-project/bin/snapshotbackup'.
     Generated script '/sample-project/bin/restore'.
     Generated script '/sample-project/bin/snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
     >>> ls('bin')
     -  backup
     -  blobbackup
@@ -567,7 +566,7 @@ So backup still works, now test restore that uses a symlinked directory as the b
     Generated script '/sample-project/bin/snapshotbackup'.
     Generated script '/sample-project/bin/restore'.
     Generated script '/sample-project/bin/snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
     >>> ls('bin')
     -  backup
     -  blobbackup
@@ -609,7 +608,7 @@ See issue #26. So test what happens:
     Generated script '/sample-project/bin/snapshotbackup'.
     Generated script '/sample-project/bin/restore'.
     Generated script '/sample-project/bin/snapshotrestore'.
-    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps. See https://github.com/collective/collective.recipe.backup/issues/65
+    backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
     >>> print(system('bin/backup'))
     INFO: Please wait while backing up database file: /sample-project/var/filestorage/Data.fs to /sample-project/var/backups
     INFO: Please wait while backing up blobs from /sample-project/var/blobstorage to /sample-project/var/blobstoragebackups

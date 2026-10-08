@@ -998,10 +998,7 @@ def backup_blobs_archive(
                 fs_backup_location, destination, base_name, timestamp, full=full
             )
             if snapshot_archive is not None:
-                # We need to use the raw format, otherwise
-                # '--listed-incremental=/dir' gets normalized to '/dir'
-                # by zc.buildout during testing. Strange, but it should
-                # be no problem to have quotes here.
+                # Quote the path of the snapshot archive.
                 tar_options = f"--listed-incremental={snapshot_archive!r}"
                 if os.path.exists(snapshot_archive):
                     # The snapshot archive exists, so this is a delta backup.
@@ -1265,7 +1262,6 @@ def restore_blobs(
     # The archive_blob options may have first been false when creating
     # a backup, then true, then false again.  During restore, we should
     # be able to restore all.
-    # See https://github.com/collective/collective.recipe.backup/issues/44
 
     # Determine the source (blob backup) that should be restored.
     archive_source = find_backup_to_restore(

@@ -160,8 +160,7 @@ def backup_arguments(
             "are no changes since the last backup, there will not "
             "be a new incremental backup file."
         )
-        # 'quick' was optional before collective.recipe.backup 5.
-        # Now we always set it for non-full backups.
+        # We always set 'quick' for non-full backups.
         # From the repozo help text:
         # Verify via md5 checksum only the last incremental written.
         # This significantly reduces the disk i/o at the (theoretical)
@@ -170,8 +169,7 @@ def backup_arguments(
         arguments.append("--quick")
     if verbose:
         arguments.append("--verbose")
-    # Before collective.recipe.backup 5, this was an option.
-    # Now it is always true.
+    # We always compress the filestorage backups.
     arguments.append("--gzip")
 
     logger.debug("Repozo arguments used: %s", " ".join(arguments))
@@ -216,7 +214,7 @@ def restore_arguments(
 def cleanup(backup_location, keep=0):
     """Clean up old backups
 
-    For the test, we create a backup dir using buildout's test support methods:
+    For the test, we create a backup dir using the test helper methods:
 
       >>> backup_dir = 'back'
       >>> mkdir(backup_dir)  # noqa F821

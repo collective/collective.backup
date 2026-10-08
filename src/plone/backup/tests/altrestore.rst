@@ -39,8 +39,8 @@ Call the script::
     >>> check_repozo_output()
     --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/alt/data
 
-Add original blobstorage (usually done by having a part that creates a
-zope instance or a zeoserver, but we do it simpler here) but forget to
+Add original blobstorage (usually this is the blobstorage of a Zope
+instance or ZEO server, but we do it simpler here) but forget to
 add it to the alternative::
 
     >>> write('.env',
@@ -260,7 +260,7 @@ Specifying ``1`` instead of ``Data`` is fine::
     --recover -o /sample-project/var/filestorage/Data.fs -r /sample-project/alt/data
 
 Specifying both ``1`` and ``Data`` is bad.
-But since version 5, only one line is supported anyway::
+Only one line is supported anyway::
 
     >>> write('.env',
     ... """

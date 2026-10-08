@@ -10,7 +10,7 @@ import sys
 
 logger = logging.getLogger("utils")
 
-# For zc.buildout's system() method:
+# For our system() method:
 MUST_CLOSE_FDS = not sys.platform.startswith("win")
 
 

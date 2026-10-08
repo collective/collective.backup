@@ -3,8 +3,7 @@
 Location
 ========
 
-You should not mix backup locations; it is confusing for the recipe
-(or at least its authors) when backups end up in the same directory::
+You should not mix backup locations; it is confusing for us when backups end up in the same directory::
 
     >>> write('.env',
     ... """
@@ -48,7 +47,7 @@ is probably grudgingly allowed, at least by this particular check.
 Unexisting backup location
 --------------------------
 
-The recipe tests the ``location`` option, to see if it will be able to
+We test the ``location`` option, to see if it will be able to
 create folders when scripts are called.
 
 We'll use all options, except the blob options for now::

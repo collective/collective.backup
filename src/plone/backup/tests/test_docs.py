@@ -1,8 +1,8 @@
 """Doctest runner for plone.backup.
 
-The doctests were written for the zc.buildout recipe collective.recipe.backup.
-We offer the same helper functions that zc.buildout.testing offered,
-and a 'generate' command instead of 'buildout'.
+The doctests run in a temporary sample project, with a mock repozo script.
+They can use helper functions like write, ls and system, and the
+'generate' and 'plone_backup' commands.
 """
 
 from plone.backup import cli

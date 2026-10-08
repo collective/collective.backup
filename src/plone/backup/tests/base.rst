@@ -3,14 +3,14 @@
 Example usage
 =============
 
-The simplest way to use it is to add a part in ``.env`` like this::
+The simplest way to use it is to add options in ``.env`` like this::
 
     >>> write('.env',
     ... """
     ... PLONE_BACKUP_BACKUP_BLOBS=false
     ... """)
 
-Running the buildout adds a backup, snapshotbackup, restore and
+Running ``plone-backup generate`` adds backup, snapshotbackup, restore and
 snapshotrestore scripts to the ``bin/`` directory and, by default, it
 creates the ``var/backups`` and ``var/snapshotbackups`` dirs::
 
@@ -117,10 +117,10 @@ You can restore the very latest snapshotbackup with ``bin/snapshotrestore``::
 Names of created scripts
 ------------------------
 
-A backup part will normally be called ``[backup]``, leading to a
-``bin/backup`` and ``bin/snapshotbackup``.  Should you name your part
-something else,  the script names will also be different as will the created
-``var/`` directories (since version 1.2):
+The name will normally be ``backup``, leading to a
+``bin/backup`` and ``bin/snapshotbackup``.  Should you set the ``name``
+option to something else, the script names will also be different as will
+the created ``var/`` directories:
 
     >>> write('.env',
     ... """
@@ -135,7 +135,7 @@ something else,  the script names will also be different as will the created
     <BLANKLINE>
 
 Note that the ``restore``, ``snapshotbackup`` and ``snapshotrestore`` script name used when the
-name is ``[backup]`` is now prefixed with the part name:
+name is ``backup`` is now prefixed with the name:
 
     >>> ls('bin')
     -  backup
@@ -149,8 +149,8 @@ name is ``[backup]`` is now prefixed with the part name:
     -  snapshotrestore
 
 In the var/ directory, the existing backups and snapshotbackups directories
-are still present.  The recipe of course never removes that kind of directory!
-The different part name *did* result in two directories named after the part:
+are still present.  We of course never remove that kind of directory!
+The different name *did* result in two directories named after it:
 
     >>> ls('var')
     d  backups

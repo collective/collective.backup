@@ -14,10 +14,6 @@ Looking up the settings for ``repozo`` and backing up the blobstorage is a chore
 and you have to pick a directory where to put the backups.
 This package provides **sensible defaults** for your common backup tasks.
 
-This is the standalone successor of the zc.buildout recipe
-`collective.recipe.backup <https://pypi.org/project/collective.recipe.backup/>`_.
-It has the same features, the same options, and the same commands,
-but it does not need buildout.
 It is meant for projects created with `cookieplone <https://github.com/plone/cookieplone>`_,
 and for Docker based deployments.
 
@@ -74,15 +70,18 @@ Add ``plone.backup`` to the dependencies of your backend, for example in
 By default the filestorage is ``var/filestorage/Data.fs`` and the
 blobstorage is ``var/blobstorage``, relative to the directory with the
 ``pyproject.toml``.  Check the ``db_filestorage_location`` and
-``db_blob_location`` in ``instance.yaml``.  When the data is in
-``instance/var``, you put this in ``backend/pyproject.toml``::
+``db_blob_location`` in ``instance.yaml``, or the generated
+``instance/etc/zope.conf``.  With the default settings of cookieplone, the
+filestorage is ``instance/var/filestorage/Data.fs`` and the blobstorage is
+``instance/var/blobs``, so you put this in ``backend/pyproject.toml``::
 
     [tool.plone-backup]
     var_dir = "instance/var"
+    blob_storage = "instance/var/blobs"
     keep = 7
 
 Now ``uv run plone-backup backup`` backs up ``instance/var/filestorage/Data.fs``
-to ``instance/var/backups``, and ``instance/var/blobstorage`` to
+to ``instance/var/backups``, and ``instance/var/blobs`` to
 ``instance/var/blobstoragebackups``.
 
 Settings that differ per server, like the backup location on production,
@@ -102,6 +101,7 @@ option, and optionally ``snapshot_cron``::
 
     [tool.plone-backup]
     var_dir = "instance/var"
+    blob_storage = "instance/var/blobs"
     cron = "0 3 * * *"
     snapshot_cron = "0 4 * * 0"
 
@@ -653,8 +653,8 @@ Development
 
 - Issue tracker: https://github.com/plone/plone.backup/issues
 
-- The history before version 1.0 is the history of ``collective.recipe.backup``:
-  https://github.com/collective/collective.recipe.backup
+- ``plone.backup`` is based on ``collective.recipe.backup``.
+  See ``HISTORY.rst`` for its changelog.
 
 - Run the tests with ``tox``, or with ``pytest`` after
   ``pip install -e '.[test]'``.

@@ -17,7 +17,7 @@ First we create some fresh content:
     ... PLONE_BACKUP_USE_RSYNC=false
     ... """)
 
-One thing we test here is if the buildout does not create too many
+One thing we test here is that we do not create too many
 directories that will not get used because have set only_blobs=true::
 
     >>> print(system(generate))

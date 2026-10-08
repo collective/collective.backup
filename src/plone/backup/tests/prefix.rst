@@ -3,9 +3,9 @@
 Locationprefix option
 =====================
 
-The locationprefix options allows you to set a base folder for all your backups and snapshot folders, instead of modifying all options in your recipe configuration.
+The locationprefix options allows you to set a base folder for all your backups and snapshot folders, instead of modifying all location options.
 
-The simplest way to use it is to add a part in ``.env`` like this::
+The simplest way to use it is to add it in ``.env`` like this::
 
     >>> write('.env',
     ... """
@@ -13,7 +13,7 @@ The simplest way to use it is to add a part in ``.env`` like this::
     ... PLONE_BACKUP_LOCATIONPREFIX=backuplocation
     ... """)
 
-Let's run the buildout::
+Let's generate the scripts::
 
     >>> ignore = system(generate)
 
@@ -129,7 +129,7 @@ A prefix plus relative locations should result in locations relative to the pref
     >>> mkdir('var', 'blobstorage')
     >>> write('var', 'blobstorage', 'blob.txt', 'dummy blob')
 
-Let's run the buildout::
+Let's generate the scripts::
 
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -244,7 +244,7 @@ A prefix plus absolute locations should result in ignoring the prefix.
     ... PLONE_BACKUP_BLOBBACKUPLOCATION=$PWD/myownbackup/blobs
     ... """)
 
-Let's run the buildout::
+Let's generate the scripts::
 
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -273,10 +273,10 @@ And run the scripts::
 Names of created scripts
 ------------------------
 
-A backup part will normally be called ``[backup]``, leading to a
-``bin/backup`` and ``bin/snapshotbackup``.  Should you name your part
-something else,  the script names will also be different as will the created
-``var/`` directories (since version 1.2):
+The name will normally be ``backup``, leading to a
+``bin/backup`` and ``bin/snapshotbackup``.  Should you set the ``name``
+option to something else, the script names will also be different as will
+the created ``var/`` directories:
 
     >>> write('.env',
     ... """
@@ -292,7 +292,7 @@ something else,  the script names will also be different as will the created
     <BLANKLINE>
 
 Note that the ``restore``, ``snapshotbackup`` and ``snapshotrestore`` script name used when the
-name is ``[backup]`` is now prefixed with the part name:
+name is ``backup`` is now prefixed with the name:
 
     >>> ls('bin')
     -  backup
@@ -306,8 +306,8 @@ name is ``[backup]`` is now prefixed with the part name:
     -  snapshotrestore
 
 In the backuplocation/ directory, the existing backups and snapshotbackups directories
-are still present.  The recipe of course never removes that kind of directory!
-The different part name *did* result in two directories named after the part:
+are still present.  We of course never remove that kind of directory!
+The different name *did* result in two directories named after it:
 
     >>> ls('backuplocation')
     d  backups

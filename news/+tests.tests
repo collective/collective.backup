@@ -1,2 +1,0 @@
-Run the doctests with pytest instead of zope.testrunner and zc.buildout.
-[jladage]

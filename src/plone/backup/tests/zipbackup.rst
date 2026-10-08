@@ -3,14 +3,13 @@
 zipbackup and ziprestore
 ========================
 
-Since version 2.20, we can create a zipbackup and ziprestore
-script.  These use a different backup location and have a few options
-hardcoded: archive_blob is True, keep is 1, regardless of what
-the options in the buildout recipe section are.  You can always create
-a separate buildout section where you explicitly change this using
+We can create a zipbackup and ziprestore script.  These use a different
+backup location and have a few options hardcoded: archive_blob is True,
+keep is 1, regardless of what the options are.  You can always use
+a separate env file where you explicitly change this using
 options for the standard bin/backup script.
 
-By default the scripts are not created.  You can ensable the them by
+By default the scripts are not created.  You can enable them by
 setting the enable_zipbackup option to true.
 
 Create directories and content::

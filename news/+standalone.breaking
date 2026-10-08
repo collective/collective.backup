@@ -1,5 +1,0 @@
-Rename ``collective.recipe.backup`` to ``plone.backup``, and make it work without zc.buildout.
-The options are read from the ``[tool.plone-backup]`` table in ``pyproject.toml``,
-from ``PLONE_BACKUP_*`` variables in a ``.env`` file, and from environment variables,
-instead of from a buildout section.  See the README for migrating.
-[jladage]

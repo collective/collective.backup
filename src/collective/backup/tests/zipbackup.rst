@@ -21,10 +21,10 @@ Create some archived and not-archived separate backup scripts::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
     ... # keep is ignored by the zipbackup script
-    ... PLONE_BACKUP_KEEP=42
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... COLLECTIVE_BACKUP_KEEP=42
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -82,9 +82,9 @@ You can choose not to enable the zip scripts::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_KEEP=42
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_KEEP=42
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=false
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -105,8 +105,8 @@ the default::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_KEEP=42
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_KEEP=42
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -125,8 +125,8 @@ refuse this combination::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true
     ... """)
     >>> print(system(generate))
     Error: Cannot have backup_blobs false and enable_zipbackup true. zipbackup is useless without blobs.

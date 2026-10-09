@@ -1,15 +1,15 @@
-"""Doctest runner for plone.backup.
+"""Doctest runner for collective.backup.
 
 The doctests run in a temporary sample project, with a mock repozo script.
 They can use helper functions like write, ls and system, and the
-'generate' and 'plone_backup' commands.
+'generate' and 'collective_backup' commands.
 """
 
-from plone.backup import cli
-from plone.backup import copyblobs
-from plone.backup import repozorunner
-from plone.backup import scripts
-from plone.backup import utils
+from collective.backup import cli
+from collective.backup import copyblobs
+from collective.backup import repozorunner
+from collective.backup import scripts
+from collective.backup import utils
 
 import doctest
 import os
@@ -137,8 +137,8 @@ def setUp(test):
             "REPOZO_SCRIPT_TEXT": repozo_script_text,
             "cat": cat,
             "check_repozo_output": check_repozo_output,
-            "generate": f"{sys.executable} -m plone.backup generate",
-            "plone_backup": f"{sys.executable} -m plone.backup",
+            "generate": f"{sys.executable} -m collective.backup generate",
+            "collective_backup": f"{sys.executable} -m collective.backup",
             "join": os.path.join,
             "ls": ls,
             "mkdir": mkdir,

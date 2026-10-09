@@ -9,8 +9,8 @@ The simplest way to use it is to add it in ``.env`` like this::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_LOCATIONPREFIX=backuplocation
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_LOCATIONPREFIX=backuplocation
     ... """)
 
 Let's generate the scripts::
@@ -115,16 +115,16 @@ A prefix plus relative locations should result in locations relative to the pref
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BACKUP_BLOBS=true
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
-    ... PLONE_BACKUP_LOCATIONPREFIX=backuplocation
-    ... PLONE_BACKUP_LOCATION=std/datafs
-    ... PLONE_BACKUP_BLOBBACKUPLOCATION=std/blobs
-    ... PLONE_BACKUP_SNAPSHOTLOCATION=snapshots/datafs
-    ... PLONE_BACKUP_BLOBSNAPSHOTLOCATION=snapshots/blobs
-    ... PLONE_BACKUP_ZIPLOCATION=snapshots/zip
-    ... PLONE_BACKUP_BLOBZIPLOCATION=snapshots/zipblobs
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=true
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... COLLECTIVE_BACKUP_LOCATIONPREFIX=backuplocation
+    ... COLLECTIVE_BACKUP_LOCATION=std/datafs
+    ... COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=std/blobs
+    ... COLLECTIVE_BACKUP_SNAPSHOTLOCATION=snapshots/datafs
+    ... COLLECTIVE_BACKUP_BLOBSNAPSHOTLOCATION=snapshots/blobs
+    ... COLLECTIVE_BACKUP_ZIPLOCATION=snapshots/zip
+    ... COLLECTIVE_BACKUP_BLOBZIPLOCATION=snapshots/zipblobs
     ... """)
     >>> mkdir('var', 'blobstorage')
     >>> write('var', 'blobstorage', 'blob.txt', 'dummy blob')
@@ -237,11 +237,11 @@ A prefix plus absolute locations should result in ignoring the prefix.
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BACKUP_BLOBS=true
-    ... PLONE_BACKUP_LOCATIONPREFIX=backuplocation
-    ... PLONE_BACKUP_LOCATION=$PWD/myownbackup/datafs
-    ... PLONE_BACKUP_BLOBBACKUPLOCATION=$PWD/myownbackup/blobs
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=true
+    ... COLLECTIVE_BACKUP_LOCATIONPREFIX=backuplocation
+    ... COLLECTIVE_BACKUP_LOCATION=$PWD/myownbackup/datafs
+    ... COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=$PWD/myownbackup/blobs
     ... """)
 
 Let's generate the scripts::
@@ -280,9 +280,9 @@ the created ``var/`` directories:
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_NAME=plonebackup
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_LOCATIONPREFIX=backuplocation
+    ... COLLECTIVE_BACKUP_NAME=plonebackup
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_LOCATIONPREFIX=backuplocation
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/plonebackup'.

@@ -9,7 +9,7 @@ requires = ["setuptools>=68.2,<83", "wheel"]
 # will be kept by plone.meta
 
 [project]
-name = "plone.backup"
+name = "collective.backup"
 version = "1.0.0a1.dev0"
 description = "Backup and restore scripts for Plone: sensible defaults around repozo"
 classifiers = [
@@ -45,15 +45,15 @@ dependencies = [
 keywords = ["plone", "zope", "backup", "restore", "repozo", "cookieplone"]
 
 [project.scripts]
-plone-backup = "plone.backup.cli:main"
+collective-backup = "collective.backup.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest"]
 
 [project.urls]
-Source = "https://github.com/plone/plone.backup"
-Issues = "https://github.com/plone/plone.backup/issues"
-Changelog = "https://github.com/plone/plone.backup/blob/main/CHANGES.rst"
+Source = "https://github.com/collective/collective.backup"
+Issues = "https://github.com/collective/collective.backup/issues"
+Changelog = "https://github.com/collective/collective.backup/blob/main/CHANGES.rst"
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst", "CHANGES.rst"]}

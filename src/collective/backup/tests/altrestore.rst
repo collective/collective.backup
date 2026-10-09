@@ -16,8 +16,8 @@ the ``alternative_restore_source`` option::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -45,8 +45,8 @@ add it to the alternative::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
     ... """)
     >>> print(system(generate))
     Error: alternative_restore_source key 'Data' is missing a blobdir.
@@ -56,8 +56,8 @@ Add blobstorage to the alternative, but not the original::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
     ... """)
     >>> print(system(generate))
     Error: alternative_restore_source key 'Data' specifies blobdir 'alt/blobs' but the original storage has no blobstorage.
@@ -66,8 +66,8 @@ Add blobstorage to original and alternative::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -159,9 +159,9 @@ When archive_blob is true, we use it::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ARCHIVE_BLOB=true
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ARCHIVE_BLOB=true
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data alt/blobs
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -207,24 +207,24 @@ of scripts::
 
     >>> write('first.env',
     ... """
-    ... PLONE_BACKUP_NAME=firstbackup
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
+    ... COLLECTIVE_BACKUP_NAME=firstbackup
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
     ... """)
     >>> write('second.env',
     ... """
-    ... PLONE_BACKUP_NAME=secondbackup
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
+    ... COLLECTIVE_BACKUP_NAME=secondbackup
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data alt/data
     ... """)
-    >>> print(system(plone_backup + ' -e second.env generate'))
+    >>> print(system(collective_backup + ' -e second.env generate'))
     Generated script '/sample-project/bin/secondbackup'.
     Generated script '/sample-project/bin/secondbackup-snapshot'.
     Generated script '/sample-project/bin/secondbackup-restore'.
     Generated script '/sample-project/bin/secondbackup-snapshotrestore'.
     Generated script '/sample-project/bin/secondbackup-altrestore'.
     <BLANKLINE>
-    >>> print(system(plone_backup + ' -e first.env generate'))
+    >>> print(system(collective_backup + ' -e first.env generate'))
     Generated script '/sample-project/bin/firstbackup'.
     Generated script '/sample-project/bin/firstbackup-snapshot'.
     Generated script '/sample-project/bin/firstbackup-restore'.
@@ -240,8 +240,8 @@ Specifying ``1`` instead of ``Data`` is fine::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=1 alt/data
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=1 alt/data
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -264,8 +264,8 @@ Only one line is supported anyway::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE="1 alt/one\\nData alt/data"
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE="1 alt/one\\nData alt/data"
     ... """)
     >>> print(system(generate))
     Error: Only one alternative_restore_source line is supported.
@@ -274,8 +274,8 @@ Unknown keys are bad::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=foo alt/foo
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=foo alt/foo
     ... """)
     >>> print(system(generate))
     Error: alternative_restore_source key 'foo' unknown. Expected 1 or Data.
@@ -284,8 +284,8 @@ A filestorage source path is required::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data
     ... """)
     >>> print(system(generate))
     Error: alternative_restore_source line 'Data' has a wrong format. Should be: 'storage-name filestorage-backup-path', optionally followed by a blobstorage-backup-path.

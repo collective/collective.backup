@@ -5,8 +5,8 @@ Test the copyblobs.backup_blobs_archive function
 
 Import stuff.
 
-    >>> from plone.backup.copyblobs import backup_blobs_archive
-    >>> from plone.backup.copyblobs import restore_blobs_archive
+    >>> from collective.backup.copyblobs import backup_blobs_archive
+    >>> from collective.backup.copyblobs import restore_blobs_archive
     >>> import time
 
 Prepare some blobs.

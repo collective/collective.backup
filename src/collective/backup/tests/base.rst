@@ -7,10 +7,10 @@ The simplest way to use it is to add options in ``.env`` like this::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
     ... """)
 
-Running ``plone-backup generate`` adds backup, snapshotbackup, restore and
+Running ``collective-backup generate`` adds backup, snapshotbackup, restore and
 snapshotrestore scripts to the ``bin/`` directory and, by default, it
 creates the ``var/backups`` and ``var/snapshotbackups`` dirs::
 
@@ -124,8 +124,8 @@ the created ``var/`` directories:
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_NAME=plonebackup
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_NAME=plonebackup
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/plonebackup'.

@@ -1,4 +1,4 @@
-plone.backup
+collective.backup
 ************
 
 Easy backup and restore of a Plone (or Zope) ZODB filestorage and blobstorage.
@@ -9,7 +9,7 @@ Easy backup and restore of a Plone (or Zope) ZODB filestorage and blobstorage.
 Introduction
 ------------
 
-``plone.backup`` is a wrapper around ``repozo``, the ZODB backup tool.
+``collective.backup`` is a wrapper around ``repozo``, the ZODB backup tool.
 Looking up the settings for ``repozo`` and backing up the blobstorage is a chore,
 and you have to pick a directory where to put the backups.
 This package provides **sensible defaults** for your common backup tasks.
@@ -17,8 +17,8 @@ This package provides **sensible defaults** for your common backup tasks.
 It is meant for projects created with `cookieplone <https://github.com/plone/cookieplone>`_,
 and for Docker based deployments.
 
-You configure it in the ``[tool.plone-backup]`` table of your ``pyproject.toml``,
-with ``PLONE_BACKUP_*`` variables in a ``.env`` file,
+You configure it in the ``[tool.collective-backup]`` table of your ``pyproject.toml``,
+with ``COLLECTIVE_BACKUP_*`` variables in a ``.env`` file,
 or with environment variables, for example in a container.
 See `Configuration`_.
 
@@ -35,22 +35,22 @@ These are the commands:
 
 - ``zipbackup`` makes a zip backup.  This zips the Data.fs and puts
   the blobstorage in one tar archive, handy for copying production data
-  to your local machine.  Enable this with ``PLONE_BACKUP_ENABLE_ZIPBACKUP=true``.
+  to your local machine.  Enable this with ``COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true``.
 
 - ``ziprestore`` restores the latest zipbackup.
 
 - ``altrestore`` restores from an alternative source, see
   `Alternative restore source`_.
 
-You can run them directly, for example ``plone-backup snapshotbackup``,
+You can run them directly, for example ``collective-backup snapshotbackup``,
 or generate the familiar ``bin/backup``, ``bin/restore``, etcetera scripts
-with ``plone-backup generate``.
+with ``collective-backup generate``.
 
 
 Compatibility
 -------------
 
-``plone.backup`` is tested with Python 3.10-3.14.
+``collective.backup`` is tested with Python 3.10-3.14.
 In Plone terms it works fine on Plone 6.0, 6.1, 6.2.
 It depends on ``ZODB``, which provides the ``repozo`` script.
 
@@ -62,10 +62,10 @@ The ``incremental_blobs`` option needs GNU ``tar``.
 Usage in a cookieplone project
 ------------------------------
 
-Add ``plone.backup`` to the dependencies of your backend, for example in
+Add ``collective.backup`` to the dependencies of your backend, for example in
 ``backend/pyproject.toml``, and install it.  Then, in the ``backend`` directory::
 
-    uv run plone-backup backup
+    uv run collective-backup backup
 
 By default the filestorage is ``var/filestorage/Data.fs`` and the
 blobstorage is ``var/blobstorage``, relative to the directory with the
@@ -75,39 +75,39 @@ blobstorage is ``var/blobstorage``, relative to the directory with the
 filestorage is ``instance/var/filestorage/Data.fs`` and the blobstorage is
 ``instance/var/blobs``, so you put this in ``backend/pyproject.toml``::
 
-    [tool.plone-backup]
+    [tool.collective-backup]
     var_dir = "instance/var"
     blob_storage = "instance/var/blobs"
     keep = 7
 
-Now ``uv run plone-backup backup`` backs up ``instance/var/filestorage/Data.fs``
+Now ``uv run collective-backup backup`` backs up ``instance/var/filestorage/Data.fs``
 to ``instance/var/backups``, and ``instance/var/blobs`` to
 ``instance/var/blobstoragebackups``.
 
 Settings that differ per server, like the backup location on production,
 go in a ``.env`` file next to the ``pyproject.toml``, which you do not commit::
 
-    PLONE_BACKUP_LOCATION=/srv/backups/mysite
-    PLONE_BACKUP_BLOBBACKUPLOCATION=/srv/backups/mysite-blobs
+    COLLECTIVE_BACKUP_LOCATION=/srv/backups/mysite
+    COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=/srv/backups/mysite-blobs
 
-If you prefer scripts, run ``uv run plone-backup generate``.
+If you prefer scripts, run ``uv run collective-backup generate``.
 This creates ``bin/backup``, ``bin/snapshotbackup``, ``bin/restore`` and
 ``bin/snapshotrestore``, with the options of that moment baked in.
-Run ``plone-backup generate`` again after changing an option.
-Use ``--bin-dir`` or ``PLONE_BACKUP_BIN_DIR`` to put the scripts elsewhere.
+Run ``collective-backup generate`` again after changing an option.
+Use ``--bin-dir`` or ``COLLECTIVE_BACKUP_BIN_DIR`` to put the scripts elsewhere.
 
 Without Docker, you can schedule the backups with cron.  Set the ``cron``
 option, and optionally ``snapshot_cron``::
 
-    [tool.plone-backup]
+    [tool.collective-backup]
     var_dir = "instance/var"
     blob_storage = "instance/var/blobs"
     cron = "0 3 * * *"
     snapshot_cron = "0 4 * * 0"
 
-Then ``uv run plone-backup crontab`` prints the crontab lines.  Add them
+Then ``uv run collective-backup crontab`` prints the crontab lines.  Add them
 with ``crontab -e``, or, when you have no crontab yet, install them with
-``uv run plone-backup crontab | crontab -``.  Each line first changes to the
+``uv run collective-backup crontab | crontab -``.  Each line first changes to the
 directory of the configuration, so the job finds the ``pyproject.toml`` and
 ``.env`` file.
 
@@ -115,15 +115,15 @@ Some ``Makefile`` targets you may want to add::
 
     .PHONY: backup
     backup: ## Backup the database
-    	@uv run plone-backup backup
+    	@uv run collective-backup backup
 
     .PHONY: snapshot
     snapshot: ## Make a snapshot backup of the database
-    	@uv run plone-backup snapshotbackup
+    	@uv run collective-backup snapshotbackup
 
     .PHONY: restore
     restore: ## Restore the latest backup of the database
-    	@uv run plone-backup restore
+    	@uv run collective-backup restore
 
 
 Docker image
@@ -141,13 +141,13 @@ with uid 500, like those images, so it can read and restore their files.
 
 The schedule is in these variables:
 
-``PLONE_BACKUP_CRON``
+``COLLECTIVE_BACKUP_CRON``
     Cron schedule for the ``backup`` command.  Default in the image: ``0 3 * * *``.
     Set it to an empty string to disable it.
-``PLONE_BACKUP_SNAPSHOT_CRON``
+``COLLECTIVE_BACKUP_SNAPSHOT_CRON``
     Cron schedule for the ``snapshotbackup`` command.  Default: not set.
 
-The image sets ``PLONE_BACKUP_VAR_DIR=/data`` and ``PLONE_BACKUP_LOCATIONPREFIX=/backups``.
+The image sets ``COLLECTIVE_BACKUP_VAR_DIR=/data`` and ``COLLECTIVE_BACKUP_LOCATIONPREFIX=/backups``.
 All other options work as described below.
 
 An example ``docker-compose.yml`` snippet, with ZEO::
@@ -159,11 +159,11 @@ An example ``docker-compose.yml`` snippet, with ZEO::
           - vol-site-data:/data
 
       backup:
-        image: ghcr.io/plone/plone-backup:latest
+        image: ghcr.io/collective/collective-backup:latest
         environment:
-          PLONE_BACKUP_CRON: "0 3 * * *"
-          PLONE_BACKUP_SNAPSHOT_CRON: "0 4 * * 0"
-          PLONE_BACKUP_KEEP: 7
+          COLLECTIVE_BACKUP_CRON: "0 3 * * *"
+          COLLECTIVE_BACKUP_SNAPSHOT_CRON: "0 4 * * 0"
+          COLLECTIVE_BACKUP_KEEP: 7
         volumes:
           - vol-site-data:/data
           - vol-backups:/backups
@@ -188,7 +188,7 @@ Without a terminal, for example in a script, add ``--no-prompt`` to skip
 the confirmation question.  To restore the state at a certain date, pass
 it like this: ``docker compose run --rm backup restore 2026-10-01-03-00``.
 
-Build the image yourself with ``docker build -t plone-backup .``.
+Build the image yourself with ``docker build -t collective-backup .``.
 
 Note that ``/backups`` is a volume on the same machine as your data.
 You should copy your backups to a different machine, or mount ``/backups``
@@ -247,7 +247,7 @@ According to ``repozo``: specify UTC (not local) time.
 The format is ``yyyy-mm-dd[-hh[-mm[-ss]]]``.
 So as a simple example, restore to 25 December 1972::
 
-    plone-backup restore 1972-12-25
+    collective-backup restore 1972-12-25
 
 or to that same date, at 2,03 seconds past 1::
 
@@ -273,14 +273,14 @@ You should do a test restore and check how long it takes.
 Command line
 ------------
 
-``plone-backup`` has these options and commands::
+``collective-backup`` has these options and commands::
 
-    plone-backup [-c CONFIG] [-e ENV_FILE] COMMAND
+    collective-backup [-c CONFIG] [-e ENV_FILE] COMMAND
 
-    -c, --config    read the [tool.plone-backup] table from this file,
+    -c, --config    read the [tool.collective-backup] table from this file,
                     default: pyproject.toml in the current directory,
                     if it has this table.
-    -e, --env-file  read PLONE_BACKUP_* variables from this file,
+    -e, --env-file  read COLLECTIVE_BACKUP_* variables from this file,
                     default: .env next to the configuration file,
                     or in the current directory.
 
@@ -301,10 +301,10 @@ a problem.  It also works for the generated scripts: ``bin/backup -q``.
 Names of the scripts
 --------------------
 
-With ``PLONE_BACKUP_NAME`` you can change the name of the generated scripts,
+With ``COLLECTIVE_BACKUP_NAME`` you can change the name of the generated scripts,
 and the default names of the backup directories.
-With ``PLONE_BACKUP_NAME=plonebackup`` and ``PLONE_BACKUP_ENABLE_ZIPBACKUP=true``,
-``plone-backup generate`` creates these scripts::
+With ``COLLECTIVE_BACKUP_NAME=plonebackup`` and ``COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true``,
+``collective-backup generate`` creates these scripts::
 
     bin/plonebackup
     bin/plonebackup-zip
@@ -316,12 +316,12 @@ With ``PLONE_BACKUP_NAME=plonebackup`` and ``PLONE_BACKUP_ENABLE_ZIPBACKUP=true`
 And the backups go to ``var/plonebackups``, ``var/plonebackup-snapshots``,
 etcetera.  Use several env files to generate several sets of scripts::
 
-    plone-backup --env-file files.env generate
-    plone-backup --env-file blobs.env generate
+    collective-backup --env-file files.env generate
+    collective-backup --env-file blobs.env generate
 
 When you generate scripts again, scripts that we generated earlier
 for the same name and are no longer wanted, are removed.  For example
-``bin/zipbackup`` when you have switched off ``PLONE_BACKUP_ENABLE_ZIPBACKUP``.
+``bin/zipbackup`` when you have switched off ``COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP``.
 
 
 Configuration
@@ -330,10 +330,10 @@ Configuration
 None of the options are needed.  You can set them in three places.
 Later places win over earlier ones:
 
-1. The ``[tool.plone-backup]`` table in ``pyproject.toml``.
+1. The ``[tool.collective-backup]`` table in ``pyproject.toml``.
    This is a good place for the settings of your project::
 
-       [tool.plone-backup]
+       [tool.collective-backup]
        var_dir = "instance/var"
        keep = 7
        enable_zipbackup = true
@@ -342,18 +342,18 @@ Later places win over earlier ones:
    You may write dashes instead of underscores: ``enable-zipbackup``.
 
 2. A ``.env`` file, next to the ``pyproject.toml``, or in the current directory
-   when there is no ``[tool.plone-backup]`` table.
+   when there is no ``[tool.collective-backup]`` table.
    This is a good place for settings that differ per server.
    Here, each option is a variable: the option name in capitals,
-   with ``PLONE_BACKUP_`` in front.  So option ``keep`` is ``PLONE_BACKUP_KEEP``,
-   and ``blobbackuplocation`` is ``PLONE_BACKUP_BLOBBACKUPLOCATION``::
+   with ``COLLECTIVE_BACKUP_`` in front.  So option ``keep`` is ``COLLECTIVE_BACKUP_KEEP``,
+   and ``blobbackuplocation`` is ``COLLECTIVE_BACKUP_BLOBBACKUPLOCATION``::
 
-       PLONE_BACKUP_KEEP=3
+       COLLECTIVE_BACKUP_KEEP=3
 
 3. Environment variables, with the same names as in the ``.env`` file.
    This is how you configure the Docker image.
 
-Use ``plone-backup show`` to see the result.
+Use ``collective-backup show`` to see the result.
 
 Boolean options accept ``true``, ``yes``, ``on`` and ``1`` as true,
 everything else is false.
@@ -388,7 +388,7 @@ environment variables are expanded.
     Default: the directory with the ``pyproject.toml``, or else the current directory.
 
 ``bin_dir``
-    Directory for the scripts that ``plone-backup generate`` creates.
+    Directory for the scripts that ``collective-backup generate`` creates.
     Default: ``bin``.
 
 ``blob_storage``
@@ -420,7 +420,7 @@ environment variables are expanded.
     Defaults to ``blobstoragezips`` in the ``locationprefix``.
 
 ``cron``
-    Cron schedule for the ``backup`` command, used by ``plone-backup crontab``
+    Cron schedule for the ``backup`` command, used by ``collective-backup crontab``
     and the Docker image.  For example ``0 3 * * *``.  Default: not set,
     except in the Docker image.
 
@@ -507,7 +507,7 @@ environment variables are expanded.
 
 ``repozo``
     The ``repozo`` script to use.  By default we look in the ``bin_dir``,
-    next to the Python that runs ``plone-backup``, and on the ``PATH``.
+    next to the Python that runs ``collective-backup``, and on the ``PATH``.
 
 ``rsync_hard_links_on_first_copy``
     When using ``rsync``, the blob files for the first backup are copied
@@ -526,7 +526,7 @@ environment variables are expanded.
     ``--no-l -k`` does the trick.
 
 ``snapshot_cron``
-    Cron schedule for the ``snapshotbackup`` command, used by ``plone-backup crontab``
+    Cron schedule for the ``snapshotbackup`` command, used by ``collective-backup crontab``
     and the Docker image.  Default: not set.
 
 ``snapshotlocation``
@@ -547,19 +547,19 @@ environment variables are expanded.
 
 An example ``.env`` file using various options::
 
-    PLONE_BACKUP_LOCATION=/var/backups/myproject
-    PLONE_BACKUP_KEEP=2
-    PLONE_BACKUP_DATAFS=subfolder/myproject.fs
-    PLONE_BACKUP_FULL=true
-    PLONE_BACKUP_DEBUG=true
-    PLONE_BACKUP_SNAPSHOTLOCATION=snap/my
-    PLONE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?'
-    PLONE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' && echo 'We are done.'
+    COLLECTIVE_BACKUP_LOCATION=/var/backups/myproject
+    COLLECTIVE_BACKUP_KEEP=2
+    COLLECTIVE_BACKUP_DATAFS=subfolder/myproject.fs
+    COLLECTIVE_BACKUP_FULL=true
+    COLLECTIVE_BACKUP_DEBUG=true
+    COLLECTIVE_BACKUP_SNAPSHOTLOCATION=snap/my
+    COLLECTIVE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?'
+    COLLECTIVE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' && echo 'We are done.'
 
 In a ``.env`` file, values may be quoted.  In double quotes, ``\n`` is a newline.
 
 If you see a warning about an unknown option, check for typos:
-``kepe`` or ``PLONE_BACKUP_KEPE`` is ignored.
+``kepe`` or ``COLLECTIVE_BACKUP_KEPE`` is ignored.
 
 
 Blob storage
@@ -572,15 +572,15 @@ You can choose to *only* backup blobs, or specifically *not* backup the blobs,
 for example to make separate scripts::
 
     # files.env
-    PLONE_BACKUP_NAME=filebackup
-    PLONE_BACKUP_BACKUP_BLOBS=false
+    COLLECTIVE_BACKUP_NAME=filebackup
+    COLLECTIVE_BACKUP_BACKUP_BLOBS=false
 
     # blobs.env
-    PLONE_BACKUP_NAME=blobbackup
-    PLONE_BACKUP_ONLY_BLOBS=true
+    COLLECTIVE_BACKUP_NAME=blobbackup
+    COLLECTIVE_BACKUP_ONLY_BLOBS=true
 
-With these files, ``plone-backup --env-file files.env backup`` only backs up the filestorage
-and ``plone-backup --env-file blobs.env backup`` only backs up the blobstorage.
+With these files, ``collective-backup --env-file files.env backup`` only backs up the filestorage
+and ``collective-backup --env-file blobs.env backup`` only backs up the blobstorage.
 
 
 rsync
@@ -594,7 +594,7 @@ It is based on this article by Mike Rubel:
 http://www.mikerubel.org/computers/rsync_snapshots/
 
 We have not tried this on Windows.  Reports are welcome, but best is
-probably to set ``PLONE_BACKUP_USE_RSYNC=false``.
+probably to set ``COLLECTIVE_BACKUP_USE_RSYNC=false``.
 Then we simply copy the blobstorage directory.
 
 
@@ -608,12 +608,12 @@ server and restore the production data there.
 In the ``alternative_restore_source`` option you can define the
 filestorage and blobstorage backup source directories using this syntax::
 
-    PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data datafs_backup [blobdir_backup]
+    COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data datafs_backup [blobdir_backup]
 
 The first word must be ``Data`` (or ``1``) for the standard ``Data.fs``.
 This enables the ``altrestore`` command.  For example::
 
-    PLONE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data /path/to/production/var/backups /path/to/production/var/blobstoragebackups
+    COLLECTIVE_BACKUP_ALTERNATIVE_RESTORE_SOURCE=Data /path/to/production/var/backups /path/to/production/var/blobstoragebackups
 
 This uses ``repozo`` to restore the Data.fs from
 the ``/path/to/production/var/backups`` repository to the standard
@@ -623,7 +623,7 @@ to the standard ``var/blobstorage`` location.
 
 Calling it with a specific date is supported just like the normal restore::
 
-    plone-backup altrestore 2000-12-31-23-59
+    collective-backup altrestore 2000-12-31-23-59
 
 
 Migrating from collective.recipe.backup
@@ -631,8 +631,8 @@ Migrating from collective.recipe.backup
 
 The options are the same, with these differences:
 
-- Options go in the ``[tool.plone-backup]`` table of ``pyproject.toml``,
-  or are environment variables: ``keep = 3`` becomes ``PLONE_BACKUP_KEEP=3``.
+- Options go in the ``[tool.collective-backup]`` table of ``pyproject.toml``,
+  or are environment variables: ``keep = 3`` becomes ``COLLECTIVE_BACKUP_KEEP=3``.
 - The name of the buildout part is the ``name`` option.
 - We do not look in other buildout parts for the location of the filestorage
   and blobstorage.  Set ``var_dir``, or ``datafs`` and ``blob_storage``.
@@ -643,17 +643,17 @@ The options are the same, with these differences:
   environment variables, for example ``$PWD/backups``.
 - Multi-line values like several ``pre_command`` lines: use ``&&``.
 - Instead of a part with ``z3c.recipe.usercrontab``, use the ``cron`` option
-  with ``plone-backup crontab``, or the Docker image.
+  with ``collective-backup crontab``, or the Docker image.
 
 
 Development
 -----------
 
-- Code repository: https://github.com/plone/plone.backup
+- Code repository: https://github.com/collective/collective.backup
 
-- Issue tracker: https://github.com/plone/plone.backup/issues
+- Issue tracker: https://github.com/collective/collective.backup/issues
 
-- ``plone.backup`` is based on ``collective.recipe.backup``.
+- ``collective.backup`` is based on ``collective.recipe.backup``.
   See ``HISTORY.rst`` for its changelog.
 
 - Run the tests with ``tox``, or with ``pytest`` after

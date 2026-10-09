@@ -1,6 +1,6 @@
 """Wrapper that invokes repozo.
 
-There are two main methods, these get called via plone.backup.main.
+There are two main methods, these get called via collective.backup.main.
 backup_main() for bin/backup and friends, restore_main() for bin/restore
 and friends.
 
@@ -13,7 +13,7 @@ filling up the harddisk.
 """
 
 from operator import itemgetter
-from plone.backup import config
+from collective.backup import config
 
 import logging
 import os

@@ -7,7 +7,7 @@ http://www.mikerubel.org/computers/rsync_snapshots/
 """
 
 from datetime import datetime
-from plone.backup import utils
+from collective.backup import utils
 
 import logging
 import os

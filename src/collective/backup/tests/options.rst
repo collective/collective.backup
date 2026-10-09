@@ -7,16 +7,16 @@ We'll use most options, except the blob options for now::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_LOCATION=$PWD/myproject
-    ... PLONE_BACKUP_KEEP=2
-    ... PLONE_BACKUP_DATAFS=subfolder/myproject.fs
-    ... PLONE_BACKUP_FULL=true
-    ... PLONE_BACKUP_DEBUG=true
-    ... PLONE_BACKUP_SNAPSHOTLOCATION=snap/my
-    ... PLONE_BACKUP_ENABLE_SNAPSHOTRESTORE=true
-    ... PLONE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?' > pre
-    ... PLONE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' > post && echo 'We are done.' >> post
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_LOCATION=$PWD/myproject
+    ... COLLECTIVE_BACKUP_KEEP=2
+    ... COLLECTIVE_BACKUP_DATAFS=subfolder/myproject.fs
+    ... COLLECTIVE_BACKUP_FULL=true
+    ... COLLECTIVE_BACKUP_DEBUG=true
+    ... COLLECTIVE_BACKUP_SNAPSHOTLOCATION=snap/my
+    ... COLLECTIVE_BACKUP_ENABLE_SNAPSHOTRESTORE=true
+    ... COLLECTIVE_BACKUP_PRE_COMMAND=echo 'Can I have a backup?' > pre
+    ... COLLECTIVE_BACKUP_POST_COMMAND=echo 'Thanks a lot for the backup.' > post && echo 'We are done.' >> post
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -126,8 +126,8 @@ generated now, and we remove the previously generated script.
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ENABLE_SNAPSHOTRESTORE=false
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ENABLE_SNAPSHOTRESTORE=false
     ... """)
 
     >>> print(system(generate))

@@ -7,11 +7,11 @@ You should not mix backup locations; it is confusing for us when backups end up 
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_LOCATION=loc1
-    ... PLONE_BACKUP_BLOBBACKUPLOCATION=loc1
-    ... PLONE_BACKUP_SNAPSHOTLOCATION=loc2
-    ... PLONE_BACKUP_BLOBSNAPSHOTLOCATION=loc2
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_LOCATION=loc1
+    ... COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=loc1
+    ... COLLECTIVE_BACKUP_SNAPSHOTLOCATION=loc2
+    ... COLLECTIVE_BACKUP_BLOBSNAPSHOTLOCATION=loc2
     ... """)
     >>> print(system(generate))
     Error: These must be distinct locations:
@@ -25,14 +25,14 @@ is probably grudgingly allowed, at least by this particular check.
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
-    ... PLONE_BACKUP_LOCATION=
-    ... PLONE_BACKUP_BLOBBACKUPLOCATION=
-    ... PLONE_BACKUP_SNAPSHOTLOCATION=
-    ... PLONE_BACKUP_BLOBSNAPSHOTLOCATION=
-    ... PLONE_BACKUP_ZIPLOCATION=
-    ... PLONE_BACKUP_BLOBZIPLOCATION=
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... COLLECTIVE_BACKUP_LOCATION=
+    ... COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=
+    ... COLLECTIVE_BACKUP_SNAPSHOTLOCATION=
+    ... COLLECTIVE_BACKUP_BLOBSNAPSHOTLOCATION=
+    ... COLLECTIVE_BACKUP_ZIPLOCATION=
+    ... COLLECTIVE_BACKUP_BLOBZIPLOCATION=
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -54,8 +54,8 @@ We'll use all options, except the blob options for now::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_LOCATION=/my/unusable/path/for/backup
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_LOCATION=/my/unusable/path/for/backup
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.

@@ -10,7 +10,7 @@ The fullbackup script was added by `Tom 'Spanky' Kapanka`_.
 
 Archive blob backups feature added by `Matej Cotman`_ (niteoweb_).
 
-The standalone ``plone.backup`` version, configured with environment variables,
+The standalone ``collective.backup`` version, configured with environment variables,
 was made by Jean-Paul Ladage (`Zest software`_).
 
 

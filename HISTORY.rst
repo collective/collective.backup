@@ -1,7 +1,7 @@
 History
 =======
 
-``plone.backup`` is based on ``collective.recipe.backup``, a zc.buildout recipe.
+``collective.backup`` is based on ``collective.recipe.backup``, a zc.buildout recipe.
 This is the changelog of ``collective.recipe.backup`` up to version 6.0.0.
 Issue numbers refer to https://github.com/collective/collective.recipe.backup/issues.
 

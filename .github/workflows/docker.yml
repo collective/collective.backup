@@ -18,7 +18,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6.2.0
         with:
-          images: ghcr.io/${{ github.repository_owner }}/plone-backup
+          images: ghcr.io/${{ github.repository_owner }}/collective-backup
           tags: |
             type=pep440,pattern={{version}}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}

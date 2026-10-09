@@ -1,16 +1,15 @@
 # -*-doctest-*-
 
-Test the copyblobs.backup_blobs function with hard_links
-========================================================
+Test the copyblobs.backup_blobs function
+========================================
 
-This especially tests backing up to directories with the option
-``rsync_hard_links_on_first_copy`` turned on.
-
+This especially tests backing up to directories.
+For archives the function calls backup_blobs_archive, which has its own tests.
 
 Import stuff.
 
-    >>> from plone.backup.copyblobs import backup_blobs
-    >>> from plone.backup.copyblobs import restore_blobs
+    >>> from collective.backup.copyblobs import backup_blobs
+    >>> from collective.backup.copyblobs import restore_blobs
     >>> import os
     >>> import time
 
@@ -25,7 +24,7 @@ Prepare some blobs.
 
 Do a backup.
 
-    >>> backup_blobs('blobs', 'backups', rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups')
     >>> ls('backups')
     d  blobs.0
     >>> ls('backups', 'blobs.0')
@@ -36,20 +35,12 @@ Do a backup.
     -  three.txt
     -  two.txt
 
-Check the file stats to see if they are really hard links:
-
-    >>> stat_0 = os.stat(os.path.join('blobs', 'three.txt'))
-    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.0', 'blobs', 'three.txt'))
-    >>> stat_0.st_ino == stat_1.st_ino
-    True
-
-Change some stuff, note that given that the backup
-has hard links the files in the backup will be modified when the .
+Change some stuff.
 
     >>> write('blobs', 'one.txt', 'Changed File One')
     >>> write('blobs', 'four.txt', 'File Four')
     >>> remove('blobs', 'two.txt')
-    >>> backup_blobs('blobs/', 'backups', rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs/', 'backups')
     >>> ls('backups')
     d  blobs.0
     d  blobs.1
@@ -64,25 +55,24 @@ has hard links the files in the backup will be modified when the .
     -  one.txt
     -  three.txt
     >>> cat('backups', 'blobs.1', 'blobs', 'one.txt')
-    Changed File One
+    File One
     >>> cat('backups', 'blobs.0', 'blobs', 'one.txt')
     Changed File One
 
 Check the file stats to see if they are really hard links:
 
-    >>> stat_0 = os.stat(os.path.join('blobs', 'three.txt'))
-    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.0', 'blobs',
+    >>> stat_0 = os.stat(os.path.join('backups', 'blobs.0', 'blobs',
     ...                               'three.txt'))
-    >>> stat_2 = os.stat(os.path.join('backups', 'blobs.1', 'blobs',
+    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.1', 'blobs',
     ...                               'three.txt'))
-    >>> stat_0.st_ino == stat_1.st_ino == stat_2.st_ino
+    >>> stat_0.st_ino == stat_1.st_ino
     True
 
 Now cleanup and try with filestamps.
 
     >>> remove('backups')
     >>> mkdir('backups')
-    >>> backup_blobs('blobs', 'backups', timestamps=True, rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups', timestamps=True)
     >>> ls('backups')
     d  blobs.20...-...-...-...-...
     >>> backup0 = sorted(os.listdir('backups'))[0]
@@ -98,7 +88,7 @@ Wait a while, so we get a different timestamp, and then change some stuff.
     >>> time.sleep(1)
     >>> remove('blobs', 'three.txt')
     >>> remove('blobs', 'four.txt')
-    >>> backup_blobs('blobs', 'backups', timestamps=True, rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups', timestamps=True)
     >>> ls('backups')
     d  blobs.20...-...-...-...-...
     d  blobs.20...-...-...-...-...
@@ -124,7 +114,7 @@ to any filestorage backup.
     >>> mkdir('fs')
     >>> write('fs', '{0}.fsz'.format(timestamp1), 'dummy fs' )
     >>> backup_blobs('blobs', 'backups', timestamps=True,
-    ...     fs_backup_location='fs', rsync_hard_links_on_first_copy=True)
+    ...     fs_backup_location='fs')
     >>> ls('backups')
     d  blobs.20...-...-...-...-...
     d  latest
@@ -141,7 +131,7 @@ Pretend there is a newer filestorage backup and a blob change.
     >>> write('blobs', 'two.txt', 'File two')
     >>> write('fs', '2100-01-01-00-00-00.fsz', 'dummy fs')
     >>> backup_blobs('blobs', 'backups', timestamps=True,
-    ...    fs_backup_location='fs', rsync_hard_links_on_first_copy=True)
+    ...    fs_backup_location='fs')
     >>> ls('backups')
     d  blobs.20...-...-...-...-...
     d  blobs.2100-01-01-00-00-00
@@ -171,7 +161,7 @@ Remove the oldest filestorage backup.
 
     >>> remove('fs', '{0}.fsz'.format(timestamp1))
     >>> backup_blobs('blobs', 'backups', timestamps=True,
-    ...    fs_backup_location='fs', rsync_hard_links_on_first_copy=True)
+    ...    fs_backup_location='fs')
     >>> ls('backups')
     d  blobs.2100-01-01-00-00-00
     d  latest
@@ -193,7 +183,7 @@ We do mostly the same as above, but now using full backups.
     >>> write('blobs', 'three.txt', 'File Three')
     >>> mkdir('blobs', 'dir')
     >>> mkdir('backups')
-    >>> backup_blobs('blobs', 'backups', full=True, rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups', full=True)
     >>> ls('backups')
     d  blobs.0
     >>> ls('backups', 'blobs.0')
@@ -204,19 +194,12 @@ We do mostly the same as above, but now using full backups.
     -  three.txt
     -  two.txt
 
-Check the file stats to see if they are really hard links:
-
-    >>> stat_0 = os.stat(os.path.join('blobs', 'three.txt'))
-    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.0', 'blobs', 'three.txt'))
-    >>> stat_0.st_ino == stat_1.st_ino
-    True
-
 Change some stuff.
 
     >>> write('blobs', 'one.txt', 'Changed File One')
     >>> write('blobs', 'four.txt', 'File Four')
     >>> remove('blobs', 'two.txt')
-    >>> backup_blobs('blobs', 'backups', full=True, rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups', full=True)
     >>> ls('backups')
     d  blobs.0
     d  blobs.1
@@ -231,20 +214,21 @@ Change some stuff.
     -  one.txt
     -  three.txt
     >>> cat('backups', 'blobs.1', 'blobs', 'one.txt')
-    Changed File One
+    File One
     >>> cat('backups', 'blobs.0', 'blobs', 'one.txt')
     Changed File One
 
 Check the file stats.  We did full copies, but these should still
 be hard links.
 
-    >>> stat_0 = os.stat(os.path.join('blobs', 'three.txt'))
-    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.0', 'blobs', 'three.txt'))
-    >>> stat_2 = os.stat(os.path.join('backups', 'blobs.1', 'blobs', 'three.txt'))
-    >>> stat_0.st_ino == stat_1.st_ino == stat_2.st_ino
+    >>> stat_0 = os.stat(os.path.join('backups', 'blobs.0', 'blobs',
+    ...                               'three.txt'))
+    >>> stat_1 = os.stat(os.path.join('backups', 'blobs.1', 'blobs',
+    ...                               'three.txt'))
+    >>> stat_0.st_ino == stat_1.st_ino
     True
 
-    >>> backup_blobs('blobs', 'backups', timestamps=True, rsync_hard_links_on_first_copy=True)
+    >>> backup_blobs('blobs', 'backups', timestamps=True)
     >>> ls('backups')
     d  blobs.0
     d  blobs.1

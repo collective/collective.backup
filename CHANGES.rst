@@ -16,18 +16,18 @@
   ``ziprestore`` and ``altrestore``.
   [jladage]
 
-- Run the commands with ``plone-backup <command>``, or generate scripts like
-  ``bin/backup`` and ``bin/restore`` with ``plone-backup generate``.
-  ``plone-backup show`` shows the computed options.
+- Run the commands with ``collective-backup <command>``, or generate scripts like
+  ``bin/backup`` and ``bin/restore`` with ``collective-backup generate``.
+  ``collective-backup show`` shows the computed options.
   [jladage]
 
-- Configure it in the ``[tool.plone-backup]`` table of ``pyproject.toml``,
-  with ``PLONE_BACKUP_*`` variables in a ``.env`` file, or with environment
+- Configure it in the ``[tool.collective-backup]`` table of ``pyproject.toml``,
+  with ``COLLECTIVE_BACKUP_*`` variables in a ``.env`` file, or with environment
   variables.
   [jladage]
 
 - Schedule backups with the ``cron`` and ``snapshot_cron`` options:
-  ``plone-backup crontab`` prints a crontab for them.
+  ``collective-backup crontab`` prints a crontab for them.
   [jladage]
 
 - Add a ``Dockerfile`` for an image that runs the scheduled backups,

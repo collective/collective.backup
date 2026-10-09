@@ -1,6 +1,6 @@
-"""The plone-backup command."""
+"""The collective-backup command."""
 
-from plone.backup import scripts
+from collective.backup import scripts
 
 import argparse
 import logging
@@ -13,7 +13,7 @@ import sys
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        prog="plone-backup",
+        prog="collective-backup",
         description=(
             "Backup and restore a Plone/Zope filestorage and blobstorage "
             "with sensible defaults around repozo. Run one of the backup or "
@@ -94,8 +94,8 @@ def crontab(config, explicit=None):
     so the job finds the same configuration and .env file.
     Options that were given explicitly on the command line are passed on.
     """
-    program = shutil.which("plone-backup") or os.path.join(
-        os.path.dirname(sys.executable), "plone-backup"
+    program = shutil.which("collective-backup") or os.path.join(
+        os.path.dirname(sys.executable), "collective-backup"
     )
     command = f"cd {shlex.quote(config.directory)} && {shlex.quote(program)}"
     if explicit is not None and explicit.config:

@@ -12,9 +12,9 @@ First we create some fresh content:
     >>> write('var', 'blobstorage', 'blob1.txt', 'Sample blob 1.')
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ONLY_BLOBS=true
-    ... PLONE_BACKUP_USE_RSYNC=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ONLY_BLOBS=true
+    ... COLLECTIVE_BACKUP_USE_RSYNC=false
     ... """)
 
 One thing we test here is that we do not create too many

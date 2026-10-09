@@ -1,9 +1,9 @@
 """Functions that invoke repozo and/or the blob backup."""
 
-from plone.backup import config
-from plone.backup import copyblobs
-from plone.backup import repozorunner
-from plone.backup import utils
+from collective.backup import config
+from collective.backup import copyblobs
+from collective.backup import repozorunner
+from collective.backup import utils
 
 import logging
 import sys

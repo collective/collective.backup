@@ -14,8 +14,8 @@ You can turn this off::
     >>> mkdir('var', 'filestorage')
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -28,9 +28,9 @@ Full cycle tests:
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_KEEP=3
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_KEEP=3
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -361,10 +361,10 @@ we use ``var/blobstorage``::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BACKUP_BLOBS=true
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=true
     ... """)
-    >>> print(system(plone_backup + ' show'))
+    >>> print(system(collective_backup + ' show'))
     name = 'backup'
     ...
                  'blobdir': '/sample-project/var/blobstorage',
@@ -374,10 +374,10 @@ Combining blob_backup=false and only_blobs=true will not work::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
-    ... PLONE_BACKUP_ONLY_BLOBS=true
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_ONLY_BLOBS=true
     ... """)
     >>> print(system(generate))
     Error: Cannot have backup_blobs false and only_blobs true.
@@ -389,26 +389,26 @@ enable_zipbackup too::
 
     >>> write('file.env',
     ... """
-    ... PLONE_BACKUP_NAME=filebackup
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BACKUP_BLOBS=false
+    ... COLLECTIVE_BACKUP_NAME=filebackup
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BACKUP_BLOBS=false
     ... """)
     >>> write('blob.env',
     ... """
-    ... PLONE_BACKUP_NAME=blobbackup
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ONLY_BLOBS=true
-    ... PLONE_BACKUP_ENABLE_ZIPBACKUP=true
+    ... COLLECTIVE_BACKUP_NAME=blobbackup
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ONLY_BLOBS=true
+    ... COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true
     ... """)
-    >>> print(system(plone_backup + ' -e file.env generate'))
+    >>> print(system(collective_backup + ' -e file.env generate'))
     Generated script '/sample-project/bin/filebackup'.
     Generated script '/sample-project/bin/filebackup-snapshot'.
     Generated script '/sample-project/bin/filebackup-restore'.
     Generated script '/sample-project/bin/filebackup-snapshotrestore'.
     backup: You have disabled blob_timestamps. Support for this may be dropped in a future version, making it impossible to restore backups without timestamps.
-    >>> print(system(plone_backup + ' -e blob.env generate'))
+    >>> print(system(collective_backup + ' -e blob.env generate'))
     Generated script '/sample-project/bin/blobbackup'.
     Generated script '/sample-project/bin/blobbackup-zip'.
     Generated script '/sample-project/bin/blobbackup-snapshot'.
@@ -502,9 +502,9 @@ restore to ensure passing of extra options to rsync works::
     >>> shutil.rmtree('var/blobstoragebackups/blobstorage.1')
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_RSYNC_OPTIONS=--no-l -k
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_RSYNC_OPTIONS=--no-l -k
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -552,14 +552,14 @@ So backup still works, now test restore that uses a symlinked directory as the b
     >>> mkdir('var/test/blobstorage.0')
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BLOBBACKUPLOCATION=test
-    ... PLONE_BACKUP_RSYNC_OPTIONS=--no-l -k
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BLOBBACKUPLOCATION=test
+    ... COLLECTIVE_BACKUP_RSYNC_OPTIONS=--no-l -k
     ... # we use pre_ and post_commands to set/unset the symlink
     ... # using os.symlink instead causes rsync to fail for some reason
-    ... PLONE_BACKUP_PRE_COMMAND=ln -s $PWD/var/blobstoragebackups/blobstorage.0/blobstorage $PWD/var/test/blobstorage.0/blobstorage
-    ... PLONE_BACKUP_POST_COMMAND=unlink $PWD/var/test/blobstorage.0/blobstorage
+    ... COLLECTIVE_BACKUP_PRE_COMMAND=ln -s $PWD/var/blobstoragebackups/blobstorage.0/blobstorage $PWD/var/test/blobstorage.0/blobstorage
+    ... COLLECTIVE_BACKUP_POST_COMMAND=unlink $PWD/var/test/blobstorage.0/blobstorage
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.
@@ -600,8 +600,8 @@ See issue #26. So test what happens:
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage/
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage/
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.

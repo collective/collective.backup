@@ -15,9 +15,9 @@ Write a configuration::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=true
-    ... PLONE_BACKUP_KEEP=3
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=true
+    ... COLLECTIVE_BACKUP_KEEP=3
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Image that makes scheduled backups of a Plone filestorage and blobstorage.
-# Configure it with PLONE_BACKUP_* environment variables, see README.rst.
+# Configure it with COLLECTIVE_BACKUP_* environment variables, see README.rst.
 ARG PYTHON_VERSION=3.12
 
 FROM python:${PYTHON_VERSION}-slim AS builder
@@ -14,9 +14,9 @@ ARG SUPERCRONIC_VERSION=v0.2.49
 ARG SUPERCRONIC_SHA1SUM_amd64=e63c11a9726b775a6a11801e81af4f3fb926aa68
 ARG SUPERCRONIC_SHA1SUM_arm64=0b6c5bb743e0b0dafed1132198c81807927ac413
 
-LABEL org.opencontainers.image.title="plone-backup" \
+LABEL org.opencontainers.image.title="collective-backup" \
       org.opencontainers.image.description="Scheduled backups of a Plone filestorage and blobstorage with repozo" \
-      org.opencontainers.image.source="https://github.com/plone/plone.backup" \
+      org.opencontainers.image.source="https://github.com/collective/collective.backup" \
       org.opencontainers.image.licenses="GPL-2.0-only"
 
 RUN set -eux; \
@@ -48,9 +48,9 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # Backups go to /backups, which you should mount as a separate volume.
 ENV PATH="/app/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
-    PLONE_BACKUP_VAR_DIR=/data \
-    PLONE_BACKUP_LOCATIONPREFIX=/backups \
-    PLONE_BACKUP_CRON="0 3 * * *"
+    COLLECTIVE_BACKUP_VAR_DIR=/data \
+    COLLECTIVE_BACKUP_LOCATIONPREFIX=/backups \
+    COLLECTIVE_BACKUP_CRON="0 3 * * *"
 
 USER plone
 WORKDIR /app

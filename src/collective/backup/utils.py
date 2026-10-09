@@ -1,5 +1,5 @@
 # Small utility methods.
-from plone.backup import config
+from collective.backup import config
 
 import builtins
 import logging

@@ -16,11 +16,11 @@ We start with a wrong one, which explicitly sets blob_timestamps to false::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ARCHIVE_BLOB=true
-    ... PLONE_BACKUP_BLOB_TIMESTAMPS=false
-    ... PLONE_BACKUP_INCREMENTAL_BLOBS=true
-    ... PLONE_BACKUP_KEEP=3
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ARCHIVE_BLOB=true
+    ... COLLECTIVE_BACKUP_BLOB_TIMESTAMPS=false
+    ... COLLECTIVE_BACKUP_INCREMENTAL_BLOBS=true
+    ... COLLECTIVE_BACKUP_KEEP=3
     ... """)
     >>> print(system(generate))
     Error: Cannot have blob_timestamps false and incremental_blobs true.
@@ -29,10 +29,10 @@ So leave the blob_timestamps option out::
 
     >>> write('.env',
     ... """
-    ... PLONE_BACKUP_BLOB_STORAGE=var/blobstorage
-    ... PLONE_BACKUP_ARCHIVE_BLOB=true
-    ... PLONE_BACKUP_INCREMENTAL_BLOBS=true
-    ... PLONE_BACKUP_KEEP=3
+    ... COLLECTIVE_BACKUP_BLOB_STORAGE=var/blobstorage
+    ... COLLECTIVE_BACKUP_ARCHIVE_BLOB=true
+    ... COLLECTIVE_BACKUP_INCREMENTAL_BLOBS=true
+    ... COLLECTIVE_BACKUP_KEEP=3
     ... """)
     >>> print(system(generate))
     Generated script '/sample-project/bin/backup'.

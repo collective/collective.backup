@@ -8,7 +8,7 @@ For archives the function cleanup_archives is used.
 
 Import stuff.
 
-    >>> from plone.backup.copyblobs import cleanup
+    >>> from collective.backup.copyblobs import cleanup
 
 For the test, we create a backup dir using the test helper methods:
 

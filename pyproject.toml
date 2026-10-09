@@ -139,6 +139,7 @@ skip = "*.po,"
 ##
 
 [tool.dependencychecker]
+ignore-packages = ['ZODB']
 Zope = [
   # Zope own provided namespaces
   'App', 'OFS', 'Products.Five', 'Products.OFSP', 'Products.PageTemplates',

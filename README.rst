@@ -1,5 +1,5 @@
 collective.backup
-************
+*****************
 
 Easy backup and restore of a Plone (or Zope) ZODB filestorage and blobstorage.
 

@@ -7,7 +7,7 @@
 
 .. towncrier release notes start
 
-1.0.0a1 (unreleased)
+1.0.0a1 (2026-10-09)
 --------------------
 
 - Initial release.  Backup and restore a ZODB filestorage and blobstorage

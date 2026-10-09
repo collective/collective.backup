@@ -10,7 +10,7 @@ requires = ["setuptools>=68.2,<83", "wheel"]
 
 [project]
 name = "collective.backup"
-version = "1.0.0a1.dev0"
+version = "1.0.0a1"
 description = "Backup and restore scripts for Plone: sensible defaults around repozo"
 classifiers = [
     "Development Status :: 3 - Alpha",

@@ -12,8 +12,8 @@ filling up the harddisk.
 
 """
 
-from operator import itemgetter
 from collective.backup import config
+from operator import itemgetter
 
 import logging
 import os

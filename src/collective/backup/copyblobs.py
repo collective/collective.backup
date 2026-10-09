@@ -6,8 +6,8 @@ It is based on this article by Mike Rubel:
 http://www.mikerubel.org/computers/rsync_snapshots/
 """
 
-from datetime import datetime
 from collective.backup import utils
+from datetime import datetime
 
 import logging
 import os

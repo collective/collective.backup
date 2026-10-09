@@ -197,7 +197,9 @@ class EnvTestCase(TempDirTestCase):
         with self.assertRaises(ConfigError):
             load_part(environ={"COLLECTIVE_BACKUP_KEEP": "many"})
         with self.assertRaises(ConfigError):
-            load_part(environ={"COLLECTIVE_BACKUP_ENV_FILE": "x"}, env_file="missing.env")
+            load_part(
+                environ={"COLLECTIVE_BACKUP_ENV_FILE": "x"}, env_file="missing.env"
+            )
 
     def test_crontab(self):
         from collective.backup.cli import crontab
@@ -222,7 +224,9 @@ class EnvTestCase(TempDirTestCase):
         import argparse
 
         os.mkdir("project")
-        self.write("project/myproject.toml", '[tool.collective-backup]\ncron = "@daily"\n')
+        self.write(
+            "project/myproject.toml", '[tool.collective-backup]\ncron = "@daily"\n'
+        )
         self.write("prod.env", "COLLECTIVE_BACKUP_KEEP=3\n")
         config = Config(
             config="project/myproject.toml", env_file="prod.env", environ={}

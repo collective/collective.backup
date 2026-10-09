@@ -35,7 +35,8 @@ These are the commands:
 
 - ``zipbackup`` makes a zip backup.  This zips the Data.fs and puts
   the blobstorage in one tar archive, handy for copying production data
-  to your local machine.  Enable this with ``COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true``.
+  to your local machine.  Enable this with ``enable_zipbackup``, see
+  `Copying production data to your development environment`_.
 
 - ``ziprestore`` restores the latest zipbackup.
 
@@ -124,6 +125,42 @@ Some ``Makefile`` targets you may want to add::
     .PHONY: restore
     restore: ## Restore the latest backup of the database
     	@uv run collective-backup restore
+
+
+Copying production data to your development environment
+-------------------------------------------------------
+
+The ``zipbackup`` and ``ziprestore`` commands are made for putting a fresh
+copy of the production data under your development environment.
+They are not enabled by default, so enable them in the
+``[tool.collective-backup]`` table that production and development share::
+
+    [tool.collective-backup]
+    var_dir = "instance/var"
+    blob_storage = "instance/var/blobs"
+    enable_zipbackup = true
+
+On production, in the ``backend`` directory, run::
+
+    uv run collective-backup zipbackup
+
+This makes a full, gzipped copy of the filestorage in ``instance/var/zipbackups``,
+and puts the blobstorage in one tar archive in ``instance/var/blobstoragezips``.
+Only the latest zipbackup is kept.  Copy both directories to the same place
+in your development environment, for example::
+
+    rsync -av --delete production:/srv/mysite/backend/instance/var/zipbackups \
+        production:/srv/mysite/backend/instance/var/blobstoragezips \
+        instance/var/
+
+Then stop your development instance and restore::
+
+    uv run collective-backup ziprestore
+
+With ``collective-backup generate`` you get ``bin/zipbackup`` and
+``bin/ziprestore`` for this.  With the Docker image, make the zipbackup with
+``docker compose run --rm -e COLLECTIVE_BACKUP_ENABLE_ZIPBACKUP=true backup zipbackup``,
+and copy ``zipbackups`` and ``blobstoragezips`` from the ``/backups`` volume.
 
 
 Docker image

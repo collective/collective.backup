@@ -17,6 +17,10 @@ jobs = [
 [pyproject]
 # ZODB is needed for its repozo script, which we call, not import.
 dependencies_ignores = "['ZODB']"
+check_manifest_ignores = """
+    ".dockerignore",
+    "Makefile",
+"""
 
 [tox]
 use_test_matrix = false

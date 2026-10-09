@@ -200,6 +200,7 @@ ignore = [
     "mx.ini",
     "tox.ini",
     ".dockerignore",
+    "Makefile",
 
 ]
 

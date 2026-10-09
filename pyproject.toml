@@ -201,6 +201,7 @@ ignore = [
     "tox.ini",
     ".dockerignore",
     "Makefile",
+    "uv.lock",
 
 ]
 

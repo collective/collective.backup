@@ -20,6 +20,7 @@ dependencies_ignores = "['ZODB']"
 check_manifest_ignores = """
     ".dockerignore",
     "Makefile",
+    "uv.lock",
 """
 
 [tox]
